@@ -27,20 +27,57 @@
 \maketitle
 
 \section{Especificaci\'on}
-\subsection{hayBallotage}
-\subsubsection{main}
+	\subsection{hayBallotage}
+		
+		\subsubsection{Main}
 
-\begin{proc}{hayBallotage}{\In escrutinio : \TLista{\ent}}{\bool}
-	%    \modifica{parametro1, parametro2,..}
-	\requiere{noHayRepetidos(escrutinio) \land_{ L } umbralElectoral(escrutinio)}
-	\asegura{res=\neg((cond1HayBallotage(escrutinio))\lor_{ L }(cond2HayBallotage(escrutinio)))}
-\end{proc}
+			\begin{proc}{hayBallotage}{\In escrutinio : \TLista{\ent}}{\bool}
+	
+				\requiere{noHayRepetidos(escrutinio) \land_{ L }\:  (\forall x: \ent)(0 \leq x < |escrutinio|) \: \longrightarrow_{L } escrutinio[x] \geq 0))}
+	
+				\asegura{res=\neg((cond1HayBallotage(escrutinio))\lor_{ L }(cond2HayBallotage(escrutinio)))}
 
-\subsubsection{predicados}
+			\end{proc}
+
+		\subsubsection{Predicados}
+
+			\pred{cond1HayBallotage}{\In escrutinio : \TLista{\ent}}{(\exists n:\ent)(0 \leq n < |escrutinio| \land_{ L }(porcentajeDeVotos(escrutinio,escrutinio[x])>45)}
+
+			\pred{noHayRepetidos}{\In escrutinio : \TLista{\ent}}{((((\forall x: \ent)(0 \leq x < |escrutinio|) \: \land_{ L } \: ((\forall y: \ent)(0 \leq y < |escrutinio|)) \: \land_{ L }  \: \neg(x=y)) \: \longrightarrow_{L }\neg(escrutinio[x] = escrutinio[y]))}
 
 
-\pred{cond1HayBallotage}{\In escrutinio : \TLista{\ent}}
-{}
+	\subsection{hayFraude}
+
+		\subsubsection{Main}
+			
+			\begin{proc}{hayFraude}{(\In escrutinio\_Presidencial: \TLista{\ent}, in escrutinio\_senadores: \TLista{\ent}⟩, in escrutinio\_diputados: \TLista{\ent}}{\bool}
+			
+				\requiere{True}
+				\asegura{res=\neg(((|sumaDeVotos(escrutinio\_Presidencia) = sumaDeVotos(escrutinio\_Senadores)) \land_{L} \\ (sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Diputados)))}
+			
+			\end{proc}
+	
+	\subsection{obtenerSenadoresEnProvincia}
+
+	\subsection{Auxiliares}
+
+		\aux{sumaDeVotos}{In escrutinio : \TLista{\ent}}{\ent}{\sum\limits_{i=0}^{|escrutinio| - 1} escrutinio[i]}
+
+		\aux{porcentajeDeVotos}{escrutinio: \TLista{\ent}, partido: \TLista{\ent}}{\float}{sumaDeVotos(escrutinio) *escrutinio[partido]*10^{-2})}
+	
+	\subsection{Predicados Universales}
+		
+		\pred{cond2HayBallotage}{\In escrutinio : \TLista{\ent}}{(\exists n:\ent)(0 \leq n < |escrutinio| \land_{ L }(porcentajeDeVotos(escrutinio,escrutinio[x])>40) \: \land_{ L } \\ \neg(\exists x:\ent)(0\leq x < |escrutinio| \land_{ L }  (\neg(n=x) \land_{ L 		} ((escrutinio[n] - escrutinio[x])>10)) }
+		
+		
+	
+		%\aux{diferenciaPres/Dip}{escrutinioPre: \TLista{\ent}}{}
+		%\aux
+
+
+
+
+
 
 
 
