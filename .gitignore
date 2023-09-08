@@ -11,6 +11,7 @@
 
 ##Logos
 !*.png
+!*.jpg
 
 ## Latex
 !*.tex
