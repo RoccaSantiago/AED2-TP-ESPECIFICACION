@@ -9,6 +9,9 @@
 !LICENSE
 !license
 
+##Logos
+!*.png
+
 ## Latex
 !*.tex
 *-concordance.tex
