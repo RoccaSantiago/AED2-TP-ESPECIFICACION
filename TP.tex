@@ -90,8 +90,18 @@
 
 	\subsection{obtenerDiputadosEnProvincia}
 		\subsubsection{Main}
+			\begin{proc}{obtenerDiputadosEnProvincia}{\In cant\_bancas: \ent, \In escrutinio: \TLista{\ent}, \In dHondt: \TLista{\TLista{\ent}}} {\TLista{\ent}}
+				 
+				\requiere{}
+				\asegura{(\forall \: r:\ent)(0\leq r < |escrutinio| - 1 \longrightarrow_{L} Res[r] = bancasDe(r, cant\_bancas, dHondt))}
 
+			\end{proc}
+
+		\subsubsection{Predicados Especificos}
 	
+			\pred{cocienteGanador}{\In indicePartido: \ent, \In bancaEnDisputa: \ent, \In dHont: \TLista{\TLista{\ent}}}{res = True \iff
+(\forall \: i: \ent)(0 \leq i < |dHont| -1 \land \neg(i = indicePartido) \longrightarrow_{L } dHont[bancaEnDisputa][indicePartido] > dHont[bancaEnDisputa][i])}
+
 	\subsection{validarListasDiputadosEnProvincia}
 		\subsubsection{Main}
 			
@@ -111,9 +121,11 @@
 
 	\subsection{Auxiliares}
 
-		\aux{sumaDeVotos}{In escrutinio : \TLista{\ent}}{\ent}{\sum\limits_{i=0}^{|escrutinio| - 1} escrutinio[i]}
+		\aux{sumaDeVotos}{\In escrutinio : \TLista{\ent}}{\ent}{\sum\limits_{i=0}^{|escrutinio| - 1} escrutinio[i]}
 
-		\aux{porcentajeDeVotos}{escrutinio: \TLista{\ent}, partido: \TLista{\ent}}{\float}{sumaDeVotos(escrutinio)^{-1} *escrutinio[partido]*10^{2})}
+		\aux{porcentajeDeVotos}{\In escrutinio: \TLista{\ent}, \In partido: \TLista{\ent}}{\float}{sumaDeVotos(escrutinio)^{-1} *escrutinio[partido]*10^{2})}
+
+		\aux{bancasDe}{\In indicePartido: \ent, \In bancas, \In dHont  \TLista{\TLista{\ent}}}{\ent}{ \\ \sum\limits_{p=0}^{bancas - 1} if \: cocienteGanador(indicePartido, p, dHont) \: then \: 1 \:  else \: 0}
 	
 	\subsection{Predicados Universales}
 		
