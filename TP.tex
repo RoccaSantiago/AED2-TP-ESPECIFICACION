@@ -155,7 +155,7 @@
 							skip
 						endif
 						if (segundo < escrutinio[i]) then
-						segundo:=escrtuinio[i]
+							segundo:=escrtuinio[i]
 						else:
 							skip
 						endif
@@ -167,10 +167,44 @@
 		\subsubsection{hayFraude}
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
-					
+						res := True
+						if (escrutinio_Presidencial = escrutinio_Diputados) then 
+							if (escrutinio_Presidencial = escrutinio_Senadores) then 
+								res := False
+							else:
+								skip
+							endif
+						else:
+							res := False
+						endif
 				\end{lstlisting}
 			\end{minipage}
 
+		\subsubsection{obetenerSenadores}
+			\begin{minipage}[t]{\textwidth}
+				\begin{lstlisting}[caption={()},label=code:for]
+						tran := 0
+						primero := 0
+						segundo :=0
+						i := 0
+						while (escrutinio.size() > i) do
+							if (escrutinio[primero] < escrutinio[segundo]) do
+								trans := primero
+								primero := segundo
+								segundo :=  trans
+							else:
+								skip
+							endif
+							if (escrutinio[segundo] < escrutinio[i]) then
+								segundo := i
+							else:
+								skip
+							endif
+							i = i + 1
+						endwhile
+		
+				\end{lstlisting}
+			\end{minipage}
 
 
 
