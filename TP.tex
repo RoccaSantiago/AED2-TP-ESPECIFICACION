@@ -48,13 +48,13 @@
 
 			
 
-	\subsection{hayFraude}
-
+	
+\subsection{hayFraude}
 		\subsubsection{Main}
 			
 			\begin{proc}{hayFraude}{(\In escrutinio\_Presidencial: \TLista{\ent}, \In escrutinio\_senadores: \TLista{\ent}⟩, \In escrutinio\_diputados: \TLista{\ent}}{\bool}
 			%UMBAL ELECTORAL NO SABEMOS BIEN
-				\requiere{umbralElectoral(escrutinio\_senadores)\: \land_{ L } \:votosValidos/NoRepetidos(escrutinio\_Presidencial) \: \land_{ L } \:\\ votosValidos/NoRepetidos(escrutinio\_senadores) \: \land_{ L } \: votosValidos/NoRepetidos(escrutinio\_diputados) \: \land_{ L }\: \\ eleccionValida(escrutinio)}
+				\requiere{umbralElectoral(escrutinio\_senadores)\: \land_{ L } \:votosValidos/NoRepetidos(escrutinio\_Presidencial) \: \land_{ L } \:\\ votosValidos/NoRepetidos(escrutinio\_senadores) \: \land_{ L } \: votosValidos/				NoRepetidos(escrutinio\_diputados) \: \land_{ L }\: \\ eleccionValida(escrutinio)}
 				
 				\asegura{res=\neg(((|sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Senadores)) \land_{L} \\ (sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Diputados)))}
 			
@@ -66,23 +66,54 @@
 			
 			\pred{umbralElectoral}{\In escrutinioSen : \TLista{\ent}}{((\forall x: \ent)(0 \leq x < |escrutinio|) \: \longrightarrow_{L } (escrutinioSen[x] > 3))}
 
+
 	\subsection{obtenerSenadoresEnProvincia}
 		\subsubsection{Main}
 			
 			\begin{proc}{obtenerSenadoresEnProvincia}{\In escrutinio : \TLista{\ent}}{\ent \texttimes \ent}
 
-                		\requiere{}
-                		\asegura{(\exists!x : \ent) (0 \leq x < |escrutinio| - 1) \land{L} ((\exists!y : \ent) (0 \leq y < |escrutinio| - 1) \
-                		\land{L} ((\forall i : \ent)(0 \leq i < |escrutinio| \land \neg (i= x) \land  \neg(i = y)) \longrightarrow_{L } escrutinio[i] < escrutinio[res_y] < escrutinio[res_x]))}
+                			\requiere{}
+                			\asegura{(\exists!x : \ent) (0 \leq x < |escrutinio| - 1) \land_{L} ((\exists!y : \ent) (0 \leq y < |escrutinio| - 1) \land_{L} ((\forall i : \ent)(0 \leq i < |escrutinio| \land \neg (i= x) \land  \neg(i = y)) \longrightarrow_{L } escrutinio[i] < escrutinio[res_y] < escrutinio[res_x]))}
 
-            		\end{proc}
+            	\end{proc}
 
+
+	 \subsection{calcularDHondtEnProvincia}
+		\subsubsection{Main}
+			\begin{proc}{calcularDHondtEnProvincia}{\In cant\_bancas: \ent, \In escrutinio: \TLista{\ent} } {\TLista{\TLista{\ent}}}
+				 
+				\requiere{}
+				\asegura{((\forall \: x:\ent)(0\leq n < cant\_bancas) \land_{L} (\forall \: x:\ent)(0\leq n <|escrutinio|))\longrightarrow_{L } \: (res[x][n]=\frac{escrutinio[x]}{n+1})}
+
+			\end{proc}
+
+
+	\subsection{obtenerDiputadosEnProvincia}
+		\subsubsection{Main}
+
+	
+	\subsection{validarListasDiputadosEnProvincia}
+		\subsubsection{Main}
+			
+			\begin{proc}{(\In cant bancas: \ent, \In listas: \TLista{\TLista{dni:\ent \times genero: \ent}}}{\bool}
+			
+				\requiere{}
+				\asegura{(\forall \: partido:\ent)(0\leq x<|listas|) \longrightarrow_{L} (cantCandidatosCorrecta(cant\_bancas,\: listas[partido])\land_{L} altGenero(listas[partido])}			
+
+			\end{proc}
+		
+		\subsubsection{Predicados Especificos}
+		
+			\pred{cantCandidatosCorrecta}{cant\_bancas: \ent, partido: \TLista{dni:\ent \times genero: \ent}}{cant\_bancas=|partido|}
+
+			\pred{altGenero}{partido: \TLista{dni:\ent \times genero: \ent}}{(((\forall n: \ent)(n>0))\longrightarrow_{L} ( ((n\mod2=0)\longrightarrow_{L} (partido[n,1]=1)) \land_{L } ((n\mod2=1)\longrightarrow_{L} (partido[n,1]=2)) \lor_{L} ((n \mod 2 = 0) \longrightarrow_{L} (partido[n,1]=2 \land_{L} (n \mod 2=1) \longrightarrow_{L} partido[n,1]=1))}
+	
 
 	\subsection{Auxiliares}
 
 		\aux{sumaDeVotos}{In escrutinio : \TLista{\ent}}{\ent}{\sum\limits_{i=0}^{|escrutinio| - 1} escrutinio[i]}
 
-		\aux{porcentajeDeVotos}{escrutinio: \TLista{\ent}, partido: \TLista{\ent}}{\float}{sumaDeVotos(escrutinio) *escrutinio[partido]*10^{-2})}
+		\aux{porcentajeDeVotos}{escrutinio: \TLista{\ent}, partido: \TLista{\ent}}{\float}{sumaDeVotos(escrutinio)^{-1} *escrutinio[partido]*10^{2})}
 	
 	\subsection{Predicados Universales}
 		
@@ -93,10 +124,52 @@
 		\pred{eleccionValida}{\In escrutinio: \TLista{\ent}}{|escrutinio| \geq 2}
 
 
-	
-		%\aux{diferenciaPres/Dip}{escrutinioPre: \TLista{\ent}}{}
-		%\aux
+\section{Implementaciones y demostraciones de correctitud}
 
+	\subsection{Implementaciones}
+		
+		\subsubsection{hayBallotage}
+		% Para hacer que quede todo en una misma linea, se puede usar minipage
+			\begin{minipage}[t]{\textwidth}
+				\begin{lstlisting}[caption={()},label=code:for]
+					res:=True
+					primero:=0
+					segundo:=0
+					i:=0
+					suma :=0
+					while (escrutinio.size() > i) do
+						suma:= suma+escrutinio[i]
+						i:=i+1
+					endwhile
+					i:=0
+					trans:=0
+					primero:=0
+					segundo:=0	
+					while (escrutinio.size() > i) do
+						escrutinio[i]=(escrtuinio[i]*100)/suma
+						if (primero < segundo) then
+							trans := primero
+							primero := segundo
+							segundo := trans
+						else:
+							skip
+						endif
+						if (segundo < escrutinio[i]) then
+						segundo:=escrtuinio[i]
+						else:
+							skip
+						endif
+						i:=i+1
+					endwhile
+				\end{lstlisting}
+			\end{minipage}
+
+		\subsubsection{hayFraude}
+			\begin{minipage}[t]{\textwidth}
+				\begin{lstlisting}[caption={()},label=code:for]
+					
+				\end{lstlisting}
+			\end{minipage}
 
 
 
