@@ -13,7 +13,7 @@
 \grupo{sudo\_rm-rf\_/*}
 
 \integrante{Rocca, Santiago}{152/23}{santiagrocca17@gmail.com}
-\integrante{Fisz, Maximiliano}{586/19}{maximilianofisz@gmail.com}
+\integrante{Fisz, Maximiliano}{586/19}{maximilianofisz@gmail.com}   
 \integrante{Gomez, Abril}{574/20}{goskema@gmail.com}
 \integrante{L\'opez, Gonzalo}{1017/22}{gonzalo.esloga.uba@gmail.com}
 % Pongan cuantos integrantes quieran
@@ -27,12 +27,15 @@
 \maketitle
 
 \section{Especificaci\'on}
-	\subsection{hayBallotage}
+	
+
+
+\subsection{hayBallotage}
 		\subsubsection{Main}
 
 			\begin{proc}{hayBallotage}{\In escrutinio : \TLista{\ent}}{\bool}
 	
-				\requiere{noHayRepetidos(escrutinio) \land_{ L }\:  cantVotosValidos(escrutinio) \: \land_{ L }\: eleccionValida(escrutinio)}
+				\requiere{eleccionValida(escrutinio))}
 	
 				\asegura{res=\neg((cond1HayBallotage(escrutinio))\lor_{ L }(cond2HayBallotage(escrutinio)))}
 
@@ -48,67 +51,76 @@
 
 			
 
-	
+
 \subsection{hayFraude}
 		\subsubsection{Main}
 			
 			\begin{proc}{hayFraude}{(\In escrutinio\_Presidencial: \TLista{\ent}, \In escrutinio\_senadores: \TLista{\ent}⟩, \In escrutinio\_diputados: \TLista{\ent}}{\bool}
 			%UMBAL ELECTORAL NO SABEMOS BIEN
-				\requiere{umbralElectoral(escrutinio\_senadores)\: \land_{ L } \:votosValidos/NoRepetidos(escrutinio\_Presidencial) \: \land_{ L } \:\\ votosValidos/NoRepetidos(escrutinio\_senadores) \: \land_{ L } \: votosValidos/				NoRepetidos(escrutinio\_diputados) \: \land_{ L }\: \\ eleccionValida(escrutinio)}
+				\requiere{umbralElectoral(escrutinio\_senadores)\: \land_{ L } \:eleccionValida(escrutinio\_Presidencial) \: \land_{ L } \:\\ eleccionValida(escrutinio\_senadores) \: \land_{ L } \: eleccionValida(escrutinio\_diputados)}
 				
 				\asegura{res=\neg(((|sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Senadores)) \land_{L} \\ (sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Diputados)))}
 			
 			\end{proc}
+
+
+
+
+
+
 		
-		\subsubsection{Predicados Especificos}
-			
-			\pred{votosValidos/NoRepetidos}{\In escrutinio : \TLista{\ent}}{noHayRepetidos(escrutinio)\land_{L} cantVotosVallidos(escrutinio)}
-			
-			\pred{umbralElectoral}{\In escrutinioSen : \TLista{\ent}}{((\forall x: \ent)(0 \leq x < |escrutinio|) \: \longrightarrow_{L } (escrutinioSen[x] > 3))}
-
-
 	\subsection{obtenerSenadoresEnProvincia}
 		\subsubsection{Main}
 			
 			\begin{proc}{obtenerSenadoresEnProvincia}{\In escrutinio : \TLista{\ent}}{\ent \texttimes \ent}
 
-                			\requiere{}
+                			\requiere{eleccionValida(escrutinio) \land minimoDePartidos(escrutinio)}
                 			\asegura{(\exists!x : \ent) (0 \leq x < |escrutinio| - 1) \land_{L} ((\exists!y : \ent) (0 \leq y < |escrutinio| - 1) \land_{L} ((\forall i : \ent)(0 \leq i < |escrutinio| \land \neg (i= x) \land  \neg(i = y)) \longrightarrow_{L } escrutinio[i] < escrutinio[res_y] < escrutinio[res_x]))}
 
             	\end{proc}
+		
+		\subsubsection{Predicados Especificos}
+			\pred{minimoDePartidos}{\In escrutinio: \TLista{\ent}}{|escrutinio| \geq 3}
+
+	
 
 
 	 \subsection{calcularDHondtEnProvincia}
 		\subsubsection{Main}
 			\begin{proc}{calcularDHondtEnProvincia}{\In cant\_bancas: \ent, \In escrutinio: \TLista{\ent} } {\TLista{\TLista{\ent}}}
 				 
-				\requiere{}
+				\requiere{eleccionValida(escrutinio) \land umbralElectoral(escrutinio) \land cant\_bancas>0)}
 				\asegura{((\forall \: x:\ent)(0\leq n < cant\_bancas) \land_{L} (\forall \: x:\ent)(0\leq n <|escrutinio|))\longrightarrow_{L } \: (res[x][n]=\frac{escrutinio[x]}{n+1})}
 
 			\end{proc}
+
 
 
 	\subsection{obtenerDiputadosEnProvincia}
 		\subsubsection{Main}
 			\begin{proc}{obtenerDiputadosEnProvincia}{\In cant\_bancas: \ent, \In escrutinio: \TLista{\ent}, \In dHondt: \TLista{\TLista{\ent}}} {\TLista{\ent}}
 				 
-				\requiere{}
-				\asegura{(\forall \: r:\ent)(0\leq r < |escrutinio| - 1 \longrightarrow_{L} Res[r] = bancasDe(r, cant\_bancas, dHondt))}
-
+				\requiere{eleccionValida(escrutinio) \land umbralElectoral(escrutinio)}
+				\asegura{(\forall \: r:\ent)(0\leq r < |escrutinio| - 1 \longrightarrow_{L} res[r] = bancasDe(r, cant\_bancas, dHondt))}
 			\end{proc}
 
 		\subsubsection{Predicados Especificos}
 	
-			\pred{cocienteGanador}{\In indicePartido: \ent, \In bancaEnDisputa: \ent, \In dHont: \TLista{\TLista{\ent}}}{res = True \iff
+			\pred{cocienteGanador}{\In indicePartido: \ent, \In bancaEnDisputa: \ent, \In dHont: \TLista{\TLista{\ent}}}{res = True \longleftrightarrow
 (\forall \: i: \ent)(0 \leq i < |dHont| -1 \land \neg(i = indicePartido) \longrightarrow_{L } dHont[bancaEnDisputa][indicePartido] > dHont[bancaEnDisputa][i])}
+
+
+
+
+
 
 	\subsection{validarListasDiputadosEnProvincia}
 		\subsubsection{Main}
 			
-			\begin{proc}{(\In cant bancas: \ent, \In listas: \TLista{\TLista{dni:\ent \times genero: \ent}}}{\bool}
+			\begin{proc}{(\In cant\_bancas: \ent, \In listas: \TLista{\TLista{dni:\ent \times genero: \ent}}}{\bool}
 			
-				\requiere{}
-				\asegura{(\forall \: partido:\ent)(0\leq x<|listas|) \longrightarrow_{L} (cantCandidatosCorrecta(cant\_bancas,\: listas[partido])\land_{L} altGenero(listas[partido])}			
+				\requiere{(cant\_bancas>0) \: \land (dni>0) \: \land \:  (1\leq genero \geq 2)}
+				\asegura{(\forall \: \: x:\ent)(0\leq x<|listas|) \longrightarrow_{L} (cantCandidatosCorrecta(cant\_bancas,\: listas[x])\land_{L} altGenero(listas[x])}			
 
 			\end{proc}
 		
@@ -119,6 +131,10 @@
 			\pred{altGenero}{partido: \TLista{dni:\ent \times genero: \ent}}{(((\forall n: \ent)(n>0))\longrightarrow_{L} ( ((n\mod2=0)\longrightarrow_{L} (partido[n,1]=1)) \land_{L } ((n\mod2=1)\longrightarrow_{L} (partido[n,1]=2)) \lor_{L} ((n \mod 2 = 0) \longrightarrow_{L} (partido[n,1]=2 \land_{L} (n \mod 2=1) \longrightarrow_{L} partido[n,1]=1))}
 	
 
+
+
+
+
 	\subsection{Auxiliares}
 
 		\aux{sumaDeVotos}{\In escrutinio : \TLista{\ent}}{\ent}{\sum\limits_{i=0}^{|escrutinio| - 1} escrutinio[i]}
@@ -127,13 +143,23 @@
 
 		\aux{bancasDe}{\In indicePartido: \ent, \In bancas, \In dHont  \TLista{\TLista{\ent}}}{\ent}{ \\ \sum\limits_{p=0}^{bancas - 1} if \: cocienteGanador(indicePartido, p, dHont) \: then \: 1 \:  else \: 0}
 	
+
+
+
+
+
 	\subsection{Predicados Universales}
 		
-		\pred{noHayRepetidos}{\In escrutinio : \TLista{\ent}}{((((\forall x: \ent)(0 \leq x < |escrutinio|) \: \land_{ L } \: ((\forall y: \ent)(0 \leq y < |escrutinio|)) \: \land_{ L }  \: \neg(x=y)) \: \longrightarrow_{L }\neg(escrutinio[x] = escrutinio[y]))}
+		\pred{noHayRepetidos}{\In escrutinio : \TLista{\ent}}{(\forall x: \ent)(0 \leq x < |escrutinio| \: \longrightarrow_{L} \: ((\forall y: \ent)(0 \leq y < |escrutinio| \: \land  \: \neg(x=y) \: \longrightarrow_{L }\neg(escrutinio[x] = escrutinio[y])))}
 		
 		\pred{cantVotosValidos}{\In escrutinio : \TLista{\ent}}{((\forall x: \ent)(0 \leq x < |escrutinio|) \: \longrightarrow_{L } (escrutinio[x] \geq 0))}
 	
-		\pred{eleccionValida}{\In escrutinio: \TLista{\ent}}{|escrutinio| \geq 2}
+		\pred{escrutinioValdio}{\In escrutinio: \TLista{\ent}}{|escrutinio| \geq 2}
+		
+		\pred{EleccionValida}{\In escrutinio: \TLista{\ent}}{nohayRepetidos(escrutinio) \land cantVotosValidos(escrutinio) \land escrutinioValido(escrutinio)}
+		
+		\pred{umbralElectoral}{\In escrutinioSen : \TLista{\ent}}{((\forall x: \ent)(0 \leq x < |escrutinio|) \: \longrightarrow_{L } (escrutinioSen[x] > 3))}
+		
 
 
 \section{Implementaciones y demostraciones de correctitud}
@@ -145,20 +171,27 @@
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
 					res:=True
+					tans:=0
 					primero:=0
 					segundo:=0
 					i:=0
 					suma :=0
 					while (escrutinio.size() > i) do
-						suma:= suma+escrutinio[i]
+						suma:= suma + escrutinio[i]
 						i:=i+1
 					endwhile
 					i:=0
-					trans:=0
-					primero:=0
-					segundo:=0	
 					while (escrutinio.size() > i) do
 						escrutinio[i]=(escrtuinio[i]*100)/suma
+						i:=i+1
+					endwhile
+					i:=0
+					while (escrutinio.size() > i) do 
+						if (segundo < escrutinio[i]) then
+							segundo:=escrtuinio[i]
+						else:
+							skip
+						endif
 						if (primero < segundo) then
 							trans := primero
 							primero := segundo
@@ -166,13 +199,18 @@
 						else:
 							skip
 						endif
-						if (segundo < escrutinio[i]) then
-							segundo:=escrtuinio[i]
-						else:
-							skip
-						endif
 						i:=i+1
 					endwhile
+					if (primero > 45) then
+						res := false
+					else
+						if ((primero > 40) && (primero - segundo >= 10)) then
+							res:=false
+						else
+							skip
+						endif
+					endif
+
 				\end{lstlisting}
 			\end{minipage}
 
@@ -180,14 +218,27 @@
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
 						res := True
-						if (escrutinio_Presidencial = escrutinio_Diputados) then 
-							if (escrutinio_Presidencial = escrutinio_Senadores) then 
-								res := False
-							else:
-								skip
-							endif
-						else:
+						sumaPres:=0
+						sumaDip:=0
+						sumaSen:=0				
+						while (escrutinio_Presidencial.size() > i) do
+							sumaPres:= sumaPres + escrutinio_Presidencial[i]
+							i:=i+1
+						endwhile
+						i:=0
+						while (escrutinio_Diputados.size() > i) do
+							sumaDip:= sumaDip + escrutinio_Diputados[i]
+							i:=i+1
+						endwhile
+						i:=0
+						while (escrutinio_Senadores.size() > i) do
+							sumaSen:= sumaSen + escrutinio_Senadores[i]
+							i:=i+1
+						endwhile
+						if (sumaPres = sumaDip && sumaPres = sumaSen) then 
 							res := False
+						else:
+							skip
 						endif
 				\end{lstlisting}
 			\end{minipage}
@@ -200,6 +251,11 @@
 						segundo :=0
 						i := 0
 						while (escrutinio.size() > i) do
+							if (escrutinio[segundo] < escrutinio[i]) then
+								segundo := i
+							else:
+								skip
+							endif
 							if (escrutinio[primero] < escrutinio[segundo]) do
 								trans := primero
 								primero := segundo
@@ -207,21 +263,50 @@
 							else:
 								skip
 							endif
-							if (escrutinio[segundo] < escrutinio[i]) then
-								segundo := i
+							i := i + 1
+						endwhile	
+						res := (primero,segundo)
+				\end{lstlisting}
+			\end{minipage}
+	
+		\subsubsection{obetenerSenadores}
+			\begin{minipage}[t]{\textwidth}
+				\begin{lstlisting}[caption={()},label=code:for]
+					res1:=True
+				
+					i :=0
+					while (listas.size() - 1 > i) do
+						lf (listas[i].size() != listas[i+1].size()) then	
+							res:=false
+						else:
+							skip
+						endif
+						i := i+1
+					endhwihile
+					if (listas[0].size() != cant_bancas) then
+						res := false
+					else:
+						skip
+					endif
+					i := 0
+					j := 0
+					while (listas.size() > i) do
+						aux := listas[i][0][1]
+						while (listas[i].size() - 1 > j) do
+							if (listas[i][j][1] == listas[i][0][1] && listas[i][j+1][1] != listas[i][0][1] then
+								res:=false
 							else:
 								skip
 							endif
-							i := i + 1
+							j := j + 2
 						endwhile
-		
+						i := i + 1
+					endwhile
+				%%%%%%%%%%%%%%%PROBLEMAS CON CANDIDATOS IMPARES
 				\end{lstlisting}
 			\end{minipage}
-
-
-
-
-
+		
+		
 
 
 
@@ -338,6 +423,11 @@ Si se pone un label al \verb|lstlisting|, se puede referenciar: Código \ref{cod
 % Pueden tener [unalinea] para que no se divida en varias lineas
 \pred{predSuelto}{parametros}{\paraTodo[unalinea]{variable}{tipo}{algo \implicaLuego expresion}}
 \pred{predSuelto}{parametros}{\existe[unalinea]{variable}{tipo}{algo \yLuego expresion}}
+
+
+
+
+
 
 
 
