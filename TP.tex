@@ -243,7 +243,7 @@
 				\end{lstlisting}
 			\end{minipage}
 
-		\subsubsection{obetenerSenadores}
+		\subsubsection{obetenerSenadoresEnProvincia}
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
 						tran := 0
@@ -269,25 +269,19 @@
 				\end{lstlisting}
 			\end{minipage}
 	
-		\subsubsection{obetenerSenadores}
+		\subsubsection{validarListasDiputadosEnProvincia}
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
-					res1:=True
-				
+					res:=True
 					i :=0
-					while (listas.size() - 1 > i) do
-						lf (listas[i].size() != listas[i+1].size()) then	
+					while (listas.size() > i) do
+						lf (listas[i].size() != cant_bancas) then	
 							res:=false
 						else:
 							skip
 						endif
 						i := i+1
-					endhwihile
-					if (listas[0].size() != cant_bancas) then
-						res := false
-					else:
-						skip
-					endif
+					endhwihileZZ
 					i := 0
 					j := 0
 					while (listas.size() > i) do
