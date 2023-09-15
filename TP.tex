@@ -217,24 +217,25 @@
 		\subsubsection{hayFraude}
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
-						res := true
+						i:=0
 						sumaPres := 0
-						sumaDip := 0
-						sumaSen := 0				
 						while (escrutinio_Presidencial.size() > i) do
 							sumaPres:= sumaPres + escrutinio_Presidencial[i]
 							i := i + 1
 						endwhile
 						i := 0
+						sumaDip := 0
 						while (escrutinio_Diputados.size() > i) do
 							sumaDip:= sumaDip + escrutinio_Diputados[i]
 							i := i + 1
 						endwhile
 						i := 0
+						sumaSen := 0
 						while (escrutinio_Senadores.size() > i) do
 							sumaSen := sumaSen + escrutinio_Senadores[i]
 							i := i + 1
 						endwhile
+						res := true
 						if (sumaPres = sumaDip && sumaPres = sumaSen) then 
 							res := false
 						else:
