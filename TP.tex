@@ -29,6 +29,33 @@
 \section{Especificaci\'on}
 	
 
+    \subsection{General}
+
+
+	\subsubsection{Predicados Universales}
+		
+		\pred{noHayRepetidos}{\In escrutinio : \TLista{\ent}}{(\forall x: \ent)(0 \leq x < |escrutinio| \: \longrightarrow_{L} \: ((\forall y: \ent)(0 \leq y < |escrutinio| \: \land  \: \neg(x=y) \: \longrightarrow_{L }\neg(escrutinio[x] = escrutinio[y])))}
+		
+		\pred{cantVotosValidos}{\In escrutinio : \TLista{\ent}}{((\forall x: \ent)(0 \leq x < |escrutinio|) \: \longrightarrow_{L } (escrutinio[x] \geq 0))}
+	
+		\pred{escrutinioValdio}{\In escrutinio: \TLista{\ent}}{|escrutinio| \geq 2}
+		
+		\pred{EleccionValida}{\In escrutinio: \TLista{\ent}}{nohayRepetidos(escrutinio) \land cantVotosValidos(escrutinio) \land escrutinioValido(escrutinio)}
+		
+		\pred{umbralElectoral}{\In escrutinioSen : \TLista{\ent}}{((\forall x: \ent)(0 \leq x < |escrutinio|) \: \longrightarrow_{L } (escrutinioSen[x] > 3))}
+
+        \pred{minimoDePartidos}{\In escrutinio: \TLista{\ent}}{|escrutinio| \geq 3}
+
+
+    \subsubsection{Auxiliares}
+
+		\aux{sumaDeVotos}{\In escrutinio : \TLista{\ent}}{\ent}{\sum\limits_{i=0}^{|escrutinio| - 1} escrutinio[i]}
+
+		\aux{porcentajeDeVotos}{\In escrutinio: \TLista{\ent}, \In votosPartido: \ent}{\float}{sumaDeVotos(escrutinio)^{-1} \; * \; votosPartido \; * \; 10^{2})}
+
+		\aux{bancasDe}{\In indicePartido: \ent, \In bancas, \In dHont  \TLista{\TLista{\ent}}}{\ent}{ \\ \sum\limits_{p=0}^{bancas - 1} if \: cocienteGanador(indicePartido, p, dHont) \: then \: 1 \:  else \: 0}
+	
+
 
 \subsection{hayBallotage}
 		\subsubsection{Main}
@@ -37,16 +64,16 @@
 	
 				\requiere{eleccionValida(escrutinio))}
 	
-				\asegura{res=\neg((cond1HayBallotage(escrutinio))\lor_{ L }(cond2HayBallotage(escrutinio)))}
+				\asegura{res=\neg((partidoMayorA45\%(escrutinio))\lor (partidoMayorA40\%ConDiferencia(escrutinio)))}
 
 			\end{proc}
 
 		\subsubsection{Predicados Especificos}
 
-			\pred{cond1HayBallotage}{\In escrutinio : \TLista{\ent}}{(\exists n:\ent)(0 \leq n < |escrutinio| \land_{ L }(porcentajeDeVotos(escrutinio,escrutinio[x])>45)}
+			\pred{partidoMayorA45\%}{\In escrutinio : \TLista{\ent}}{(\exists n:\ent)(0 \leq n < |escrutinio|-1 \land_{ L }(porcentajeDeVotos(escrutinio,escrutinio[n])>45)}
 
 
-			\pred{cond2HayBallotage}{\In escrutinio : \TLista{\ent}}{(\exists n:\ent)(0 \leq n < |escrutinio| \land_{ L }(porcentajeDeVotos(escrutinio,escrutinio[x])>40) \: \land_{ L } \\ \neg(\exists x:\ent)(0\leq x < |escrutinio| \land_{ L }  (\neg(n=x) 	\land_{ L } ((escrutinio[n] - escrutinio[x])>10)) }
+			\pred{partidoMayorA40\%ConDiferencia}{\In escrutinio : \TLista{\ent}}{(\exists n:\ent)(0 \leq n < |escrutinio| -1 \land_{ L }(porcentajeDeVotos(escrutinio,escrutinio[n])>40) \: \land_{ L } \\ \neg(\forall x:\ent)(0\leq x < |escrutinio|-1 \land  (\neg(n=x) \longrightarrow_{ L } ((escrutinio[n] - escrutinio[x])>10)) }
 
 
 			
@@ -55,11 +82,11 @@
 \subsection{hayFraude}
 		\subsubsection{Main}
 			
-			\begin{proc}{hayFraude}{(\In escrutinio\_Presidencial: \TLista{\ent}, \In escrutinio\_senadores: \TLista{\ent}⟩, \In escrutinio\_diputados: \TLista{\ent}}{\bool}
+			\begin{proc}{hayFraude}{(\In escrutinio\_Presidencial: \TLista{\ent}, \In escrutinio\_Senadores: \TLista{\ent}⟩, \In escrutinio\_Diputados: \TLista{\ent}}{\bool}
 			%UMBAL ELECTORAL NO SABEMOS BIEN
-				\requiere{umbralElectoral(escrutinio\_senadores)\: \land_{ L } \:eleccionValida(escrutinio\_Presidencial) \: \land_{ L } \:\\ eleccionValida(escrutinio\_senadores) \: \land_{ L } \: eleccionValida(escrutinio\_diputados)}
+				\requiere{umbralElectoral(escrutinio\_senadores)\: \land\:eleccionValida(escrutinio\_Presidencial) \: \land\:\\ eleccionValida(escrutinio\_senadores) \: \land \: eleccionValida(escrutinio\_diputados) \land minimoDePartidos(escrutinio\_Senadores)}
 				
-				\asegura{res=\neg(((|sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Senadores)) \land_{L} \\ (sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Diputados)))}
+				\asegura{res=\neg(((|sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Senadores)) \land \\ (sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Diputados)))}
 			
 			\end{proc}
 
@@ -75,12 +102,12 @@
 			\begin{proc}{obtenerSenadoresEnProvincia}{\In escrutinio : \TLista{\ent}}{\ent \texttimes \ent}
 
                 			\requiere{eleccionValida(escrutinio) \land minimoDePartidos(escrutinio)}
-                			\asegura{(\exists!x : \ent) (0 \leq x < |escrutinio| - 1) \land_{L} ((\exists!y : \ent) (0 \leq y < |escrutinio| - 1) \land_{L} ((\forall i : \ent)(0 \leq i < |escrutinio| \land \neg (i= x) \land  \neg(i = y)) \longrightarrow_{L } escrutinio[i] < escrutinio[res_y] < escrutinio[res_x]))}
+                			\asegura{(\exists!x : \ent) (0 \leq x < |escrutinio| - 1 \land_{L} ((\exists!y : \ent) (0 \leq y < |escrutinio| - 1 \land_{L} ((\forall i : \ent)(0 \leq i < |escrutinio| -1 \land \neg (i= x) \land  \neg(i = y) \longrightarrow_{L } escrutinio[i] < escrutinio[res_y] < escrutinio[res_x]))))}
 
             	\end{proc}
 		
 		\subsubsection{Predicados Especificos}
-			\pred{minimoDePartidos}{\In escrutinio: \TLista{\ent}}{|escrutinio| \geq 3}
+			
 
 	
 
@@ -104,7 +131,6 @@
 				\asegura{(\forall \: r:\ent)(0\leq r < |escrutinio| - 1 \longrightarrow_{L} res[r] = bancasDe(r, cant\_bancas, dHondt))}
 			\end{proc}
 
-		\subsubsection{Predicados Especificos}
 	
 			\pred{cocienteGanador}{\In indicePartido: \ent, \In bancaEnDisputa: \ent, \In dHont: \TLista{\TLista{\ent}}}{res = True \longleftrightarrow
 (\forall \: i: \ent)(0 \leq i < |dHont| -1 \land \neg(i = indicePartido) \longrightarrow_{L } dHont[bancaEnDisputa][indicePartido] > dHont[bancaEnDisputa][i])}
@@ -120,7 +146,7 @@
 			\begin{proc}{(\In cant\_bancas: \ent, \In listas: \TLista{\TLista{dni:\ent \times genero: \ent}}}{\bool}
 			
 				\requiere{(cant\_bancas>0) \: \land (dni>0) \: \land \:  (1\leq genero \geq 2)}
-				\asegura{(\forall \: \: x:\ent)(0\leq x<|listas|) \longrightarrow_{L} (cantCandidatosCorrecta(cant\_bancas,\: listas[x])\land_{L} altGenero(listas[x])}			
+				\asegura{(\forall \: \: partido:\ent)(0\leq partido<|listas|) \longrightarrow_{L} (cantCandidatosCorrecta(cant\_bancas,\: listas[partido])\land altGenero(listas[partido])}			
 
 			\end{proc}
 		
@@ -135,31 +161,7 @@
 
 
 
-	\subsection{Auxiliares}
-
-		\aux{sumaDeVotos}{\In escrutinio : \TLista{\ent}}{\ent}{\sum\limits_{i=0}^{|escrutinio| - 1} escrutinio[i]}
-
-		\aux{porcentajeDeVotos}{\In escrutinio: \TLista{\ent}, \In partido: \TLista{\ent}}{\float}{sumaDeVotos(escrutinio)^{-1} *escrutinio[partido]*10^{2})}
-
-		\aux{bancasDe}{\In indicePartido: \ent, \In bancas, \In dHont  \TLista{\TLista{\ent}}}{\ent}{ \\ \sum\limits_{p=0}^{bancas - 1} if \: cocienteGanador(indicePartido, p, dHont) \: then \: 1 \:  else \: 0}
 	
-
-
-
-
-
-	\subsection{Predicados Universales}
-		
-		\pred{noHayRepetidos}{\In escrutinio : \TLista{\ent}}{(\forall x: \ent)(0 \leq x < |escrutinio| \: \longrightarrow_{L} \: ((\forall y: \ent)(0 \leq y < |escrutinio| \: \land  \: \neg(x=y) \: \longrightarrow_{L }\neg(escrutinio[x] = escrutinio[y])))}
-		
-		\pred{cantVotosValidos}{\In escrutinio : \TLista{\ent}}{((\forall x: \ent)(0 \leq x < |escrutinio|) \: \longrightarrow_{L } (escrutinio[x] \geq 0))}
-	
-		\pred{escrutinioValdio}{\In escrutinio: \TLista{\ent}}{|escrutinio| \geq 2}
-		
-		\pred{EleccionValida}{\In escrutinio: \TLista{\ent}}{nohayRepetidos(escrutinio) \land cantVotosValidos(escrutinio) \land escrutinioValido(escrutinio)}
-		
-		\pred{umbralElectoral}{\In escrutinioSen : \TLista{\ent}}{((\forall x: \ent)(0 \leq x < |escrutinio|) \: \longrightarrow_{L } (escrutinioSen[x] > 3))}
-		
 
 
 \section{Implementaciones y demostraciones de correctitud}
@@ -187,12 +189,12 @@
 					endwhile
 					i := 0
 					while (escrutinio.size() > i) do 
-						if (segundo < escrutinio[i]) then
+						if (segundo < escrutinio[i])
 							segundo := escrutinio[i]
 						else:
 							skip
 						endif
-						if (primero < segundo) then
+						if (primero < segundo)
 							trans := primero
 							primero := segundo
 							segundo := trans
@@ -201,10 +203,10 @@
 						endif
 						i := i + 1
 					endwhile
-					if (primero > 45) then
+					if (primero > 45)
 						res := false
 					else
-						if ((primero > 40) && (primero - segundo >= 10)) then
+						if ((primero > 40) && (primero - segundo >= 10))
 							res := false
 						else
 							skip
@@ -235,8 +237,12 @@
 							sumaSen := sumaSen + escrutinio_Senadores[i]
 							i := i + 1
 						endwhile
+<<<<<<< HEAD
 						res := true
 						if (sumaPres = sumaDip && sumaPres = sumaSen) then 
+=======
+						if (sumaPres = sumaDip && sumaPres = sumaSen)
+>>>>>>> 4044d73e3a04188e7e8761646fac4a6fabb4b00d
 							res := false
 						else:
 							skip
@@ -244,7 +250,7 @@
 				\end{lstlisting}
 			\end{minipage}
 
-		\subsubsection{obetenerSenadoresEnProvincia}
+		\subsubsection{obtenerSenadoresEnProvincia}
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
 						trans := 0
@@ -252,12 +258,12 @@
 						segundo := 0
 						i := 0
 						while (escrutinio.size() > i) do
-							if (escrutinio[segundo] < escrutinio[i]) then
+							if (escrutinio[segundo] < escrutinio[i])
 								segundo := i
 							else:
 								skip
 							endif
-							if (escrutinio[primero] < escrutinio[segundo]) do
+							if (escrutinio[primero] < escrutinio[segundo])
 								trans := primero
 								primero := segundo
 								segundo :=  trans
@@ -266,7 +272,8 @@
 							endif
 							i := i + 1
 						endwhile	
-						res := (primero, segundo)
+						res_{0}:= primero
+                        res{1}:= segundo
 				\end{lstlisting}
 			\end{minipage}
 	
@@ -276,7 +283,7 @@
 					res := true
 					i := 0
 					while (listas.size() > i) do
-						if (listas[i].size() != cant_bancas) then	
+						if (listas[i].size() != cant_bancas) 
 							res:= false
 						else:
 							skip
@@ -288,7 +295,7 @@
 					while (listas.size() > i) do
 						genero := listas[i][0][1]
 						while (listas[i].size() > j) do
-							if (listas[i][j][1] == genero) then
+							if (listas[i][j][1] == genero) 
 								res:=false
 							else:
 								genero := listas[i][j][1]
@@ -300,129 +307,5 @@
 				\end{lstlisting}
 			\end{minipage}
 		
-		
-
-
-
-Lo principal: las fórmulas. Se puede poner en una linea, como $x_i = x_{i-1} + x_{i-2}$, o ponerse más grande:
-
-\begin{equation}
-	\sum\limits_{i=0}^{n} i
-	\label{eq:1}
-\end{equation}
-
-Y se pueden citar ecuaciones con \verb|\eqref{nombreDeEq}|: \eqref{eq:1}
-
-Ejemplo de itemizado:
-
-\begin{itemize}
-	\item Item 1
-	\item Item 2
-	\item Item 3
-\end{itemize}
-
-Ejemplo de enumerado con menor distancia entre items:
-
-\begin{enumerate} \setlength\itemsep{0cm}
-	\item Item 1
-	\item Item 2
-	\item Item 3
-\end{enumerate}
-
-Podemos escribir mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto. Mucho texto.
-
-Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo. Otro párrafo.
-
-\vspace{0.3cm}
-
-Le agregamos una separación entre párrafos. Le agregamos una separación entre párrafos. Le agregamos una separación entre párrafos. Le agregamos una separación entre párrafos. Le agregamos una separación entre párrafos.
-
-\vspace{0.3cm}
-
-La tabla \ref{tab:ejemplo} es un ejemplo de cómo se hace una tabla.
-
-\begin{table}[h!]
-	\centering
-	\begin{tabular}{||l c c r||} 
-		\hline
-		Col1 & Col2 & Col2 & Col3 \\ [0.5ex] 
-		\hline\hline
-		1 & 6 & 87837 & 787 \\ 
-		2 & 7 & 78 & 5415 \\
-		3 & 545 & 778 & 7507 \\
-		4 & 545 & 18744 & 7560 \\
-		5 & 88 & 788 & 6344 \\
-		\hline
-	\end{tabular}
-	\caption{Ejemplo de tabla}
-	\label{tab:ejemplo}
-\end{table}
-
-
-La figura \ref{fig:subfigs} es un ejemplo de cómo se agrega una imagen.
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.6\textwidth]{logo_dc.jpg}
-	\caption{Ejemplo de figura}
-	\label{fig:ejemplo}
-\end{figure}
-
-\begin{figure}[ht!]
-	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[width=0.9\linewidth]{LaTeX-project} 
-		\caption{Logo de LaTeX}
-		\label{fig:subfig1}
-	\end{subfigure}
-	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[width=0.7\linewidth]{TeX}
-		\caption{Logo de TeX}
-		\label{fig:subfig2}
-	\end{subfigure}
-	\caption{Ejemplo para poner dos figuras juntas. Y citarlas por separado a (\subref{fig:subfig1}) y (\subref{fig:subfig2}).}
-	% OJO: el caption siempre va antes del label
-	\label{fig:subfigs}
-\end{figure}
-
-
-
-% Para hacer que quede todo en una misma linea, se puede usar minipage
-%\begin{minipage}[t]{\textwidth}
-	\begin{lstlisting}[caption={Ejemplo de código (usando los estilos de la cátedra, ver las macros para más detalles)},label=code:for]
-res := 0;
-i := 0;
-while (i < s.size()) do
-	res := res + s[i];
-	i := i + 1
-endwhile
-	\end{lstlisting}
-%\end{minipage}
-
-Si se pone un label al \verb|lstlisting|, se puede referenciar: Código \ref{code:for}.
-
-
-\subsection{Macros de la cátedra para especificar}
-
-\begin{proc}{nombre}{\In paramIn : \nat, \Inout paramInout : \TLista{\ent}}{tipoRes}
-	%    \modifica{parametro1, parametro2,..}
-	\requiere{expresionBooleana1}
-	\asegura{expresionBooleana2}
-	\aux{auxiliar1}{parametros}{tipoRes}{expresion}
-	\pred{pred1}{parametros}{expresion} 
-\end{proc}
-
-\aux{auxiliarSuelto}{parametros}{tipoRes}{expresion}
-% \paraTodo{variable}{tipo}{expresion}
-% \existe{variable}{tipo}{expresion}
-% Pueden tener [unalinea] para que no se divida en varias lineas
-\pred{predSuelto}{parametros}{\paraTodo[unalinea]{variable}{tipo}{algo \implicaLuego expresion}}
-\pred{predSuelto}{parametros}{\existe[unalinea]{variable}{tipo}{algo \yLuego expresion}}
-
-
-
-
-
-
-
 
 \end{document}
