@@ -102,7 +102,7 @@
 			\begin{proc}{obtenerSenadoresEnProvincia}{\In escrutinio : \TLista{\ent}}{\ent \texttimes \ent}
 
                 			\requiere{eleccionValida(escrutinio) \land minimoDePartidos(escrutinio)}
-                			\asegura{(\exists!x : \ent) (0 \leq x < |escrutinio| - 1 \land_{L} ((\exists!y : \ent) (0 \leq y < |escrutinio| - 1 \land_{L} ((\forall i : \ent)(0 \leq i < |escrutinio| -1 \land \neg (i= x) \land  \neg(i = y) \longrightarrow_{L } escrutinio[i] < escrutinio[res_y] < escrutinio[res_x]))))}
+                			\asegura{(\exists!x : \ent) (0 \leq x < |escrutinio| - 1 \land_{L} ((\exists!y : \ent) (0 \leq y < |escrutinio| - 1 \land_{L} ((\forall i : \ent)(0 \leq i < |escrutinio| -1 \land \neg (i= x) \land  \neg(i = y) \longrightarrow_{L } escrutinio[i] < escrutinio[res_1 = y] < escrutinio[res_0 = x]))))}
 
             	\end{proc}
 		
