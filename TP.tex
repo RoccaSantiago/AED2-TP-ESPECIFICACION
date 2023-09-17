@@ -82,11 +82,11 @@
 \subsection{hayFraude}
 		\subsubsection{Main}
 			
-			\begin{proc}{hayFraude}{(\In escrutinio\_Presidencial: \TLista{\ent}, \In escrutinio\_Senadores: \TLista{\ent}⟩, \In escrutinio\_Diputados: \TLista{\ent}}{\bool}
-			%UMBAL ELECTORAL NO SABEMOS BIEN
-				\requiere{umbralElectoral(escrutinio\_senadores)\: \land\:eleccionValida(escrutinio\_Presidencial) \: \land\:\\ eleccionValida(escrutinio\_senadores) \: \land \: eleccionValida(escrutinio\_diputados) \land minimoDePartidos(escrutinio\_Senadores)}
+			\begin{proc}{hayFraude}{(\In escrutinio\_Presidente: \TLista{\ent}, \In escrutinio\_Senadores: \TLista{\ent}⟩, \In escrutinio\_Diputados: \TLista{\ent}}{\bool}
+				\requiere{umbralElectoral(escrutinio\_Senadores)\: \land\:eleccionValida(escrutinio\_Presidente) \: \land\:\\ eleccionValida(escrutinio\_Senadores) \: \land \: eleccionValida(escrutinio\_diputados) \land \\ minimoDePartidos(escrutinio\_Senadores) \land \\ 
+(|escrutinio\_Presidente| = |escrutinio\_Senadores| = |escrutinio\_Diputados|)}
 				
-				\asegura{res=\neg(((|sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Senadores)) \land \\ (sumaDeVotos(escrutinio\_Presidencial) = sumaDeVotos(escrutinio\_Diputados)))}
+				\asegura{res=\neg(((|sumaDeVotos(escrutinio\_Presidente) = sumaDeVotos(escrutinio\_Senadores)) \land \\ (sumaDeVotos(escrutinio\_Presidente) = sumaDeVotos(escrutinio\_Diputados)))}
 			
 			\end{proc}
 
@@ -219,30 +219,18 @@
 		\subsubsection{hayFraude}
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
-						i:=0
-						sumaPres := 0
-						while (escrutinio_Presidencial.size() > i) do
-							sumaPres:= sumaPres + escrutinio_Presidencial[i]
-							i := i + 1
-						endwhile
 						i := 0
+						SumaSen := 0
 						sumaDip := 0
-						while (escrutinio_Diputados.size() > i) do
-							sumaDip:= sumaDip + escrutinio_Diputados[i]
+						sumaPres := 0
+						while (escrutinio_Presidente.size() > i) do
+							sumaPres := sumaPres + escrutinio_Presidente[i]
+							sumaDip := sumaDip + escrutinio_Diputados[i]
+							sumaSen := sumaSen + escrutinio_Senadoresl[i]
 							i := i + 1
 						endwhile
-						i := 0
-						sumaSen := 0
-						while (escrutinio_Senadores.size() > i) do
-							sumaSen := sumaSen + escrutinio_Senadores[i]
-							i := i + 1
-						endwhile
-<<<<<<< HEAD
 						res := true
 						if (sumaPres = sumaDip && sumaPres = sumaSen) then 
-=======
-						if (sumaPres = sumaDip && sumaPres = sumaSen)
->>>>>>> 4044d73e3a04188e7e8761646fac4a6fabb4b00d
 							res := false
 						else:
 							skip
