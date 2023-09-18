@@ -241,10 +241,16 @@
 		\subsubsection{obtenerSenadoresEnProvincia}
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
+						
 						trans := 0
-						primero := 0
-						segundo := 0
-						i := 0
+						if (s[0] > s[1]):
+    							primero := 0
+    							segundo := 1
+						else:
+    							primero := 1
+    							segundo := 0
+						endif
+						i := 2
 						while (escrutinio.size() > i) do
 							if (escrutinio[segundo] < escrutinio[i])
 								segundo := i
@@ -295,5 +301,147 @@
 				\end{lstlisting}
 			\end{minipage}
 		
+	\subsection{Demostraciones de correctitud}
+\subsubsection{hayFraude}
+\begin{itemize}
+	\item s=escrutinio \_presidencial
+    \item $P_c = \{ i=0 \land sumaPres=0 \land sumaDip=0 \land sumaSen=0 \}$
+	\item $Q_c = \left\{ \sum\limits_{x=0}^{|s| - 1} escrutinio\_Presidencial[x] \land \sum\limits_{y=0}^{|s| - 1} escrutinio\_Senadores[y] \land \sum\limits_{z=0}^{|s| - 1} escrutinio\_Diputados[z] \right\}$
+	\item $B = |s| > i$
+	\item $F_v = |s| - i$
+	\item $I = \{0 \leq i \leq |s| \land (\sum\limits_{x=0}^{|s| - 1} escrutinio\_Presidencial[x] \land \sum\limits_{y=0}^{|s| - 1} escrutinio\_Senadores[y] \land \sum\limits_{z=0}^{|s| - 1} escrutinio\_Diputados[z])\}$
+\end{itemize}
+\vspace{6mm} 
+{1. Pre $\longrightarrow_{L}$ wp(sumaPres := 0; sumaDip := 0; sumaSen := 0; i :=0, Pc) } $ \equiv $
+\vspace{3mm} 
 
+$wp(sumaDip := 0, wp(sumaDip := 0, wp(sumaSen := 0, wp(i := 0, P_c)))) $
+
+$wp(i := 0, P_c) \equiv def(0) \land_L  P^i_0$
+
+\quad\quad\quad$ \equiv 0 = 0 \land sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0 $ %alinear bien esto
+
+$ \equiv sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0 \equiv Q^1 $  %alinear bien esto
+
+$wp(sumaSen := 0, Q^1) \equiv def(0) \land_L Q^{sumaSen}_0 $%revisar a que estan elevados estos sumasen sumadip potencia
+
+$\equiv sumaPres = 0 \land sumaDip = 0 \land 0 = 0 \equiv Q^2 $  %alinear bien esto
+
+$wp(sumaSen := 0, Q^2) \equiv def(0) \land_L Q^{sumaDip}_0 $
+
+$\equiv sumaDip = 0 \land 0 = 0 \equiv Q^3 $  %alinear bien esto
+
+$wp(sumaPres := 0, Q^3) \equiv def(0) \land_L Q^{sumaPres}_0 $
+
+$\equiv 0 = 0 $  %alinear bien esto
+
+$ \equiv True $ %alinear bien esto
+
+
+\vspace{3mm} 
+{Pre $\longrightarrow_{L}$ wp(sumaPres := 0; sumaDip := 0; sumaSen := 0; i :=0; Pc) = True }
+\vspace{5mm} 
+
+{2. $Q_c \longrightarrow_{L} \text{wp}(res = \text{True}; \text{If}(\ldots); Q) \equiv \text{True}$} %revisar if, esto tenia que estar como el 1 Pre
+
+\vspace{3mm} 
+$ MM = \{ \sum\limits_{x=0}^{i - 1} escrutinio\_Presidencial[x] =\sum\limits_{y=0}^{i - 1} escrutinio\_Diputados[y] \land $ 
+\\ $\sum\limits_{x=0}^{i - 1} escrutinio\_Presidencial[x] = \sum\limits_{z=0}^{i - 1} escrutinio\_Senadores[z] \} $ 
+
+\vspace{2mm} 
+
+$wp(res := True, wp(If ...; Q)) \equiv $ %alinear bien esto
+
+$wp(If ..., Q) \equiv ((sumaPres = sumaDip  \land  sumaPres = sumaSen   \land  wp(res := False, Q) \lor (def (A) \land \neg MM \land wp(skip,Q)) \equiv $
+
+$(MM \land Q^{res}_{\text{False}}) ) \lor (\neg MM \land Q) \equiv $
+\vspace{2mm} \vspace{2mm} 
+
+$(M \land False = \neg MM ) \lor (\neg MM \land res := \neg MM ) \equiv$
+\vspace{2mm} 
+
+$ (M \land True = MM ) \lor (\neg M \land res := \neg MM ) \equiv Q_2$\vspace{2mm} 
+
+$wp(res:true, Q_2) \equiv$\vspace{2mm} \vspace{2mm} 
+
+$Q^{res}_{\text{True}} \equiv (MM \land True = MM) \lor (\neg MM \land False=MM)\equiv True $
+\vspace{2mm} \vspace{2mm} \\
+
+${3. P_c \longrightarrow_{L} wp(while ... , Q)}$ 
+Trivial, hace la sumatoria 0
+\vspace{3mm} 
+
+$\\ A) \; \: I \land \neg B  \longrightarrow Q_c $ 
+
+ $i \geq |s| \Longleftrightarrow i = |s| (por rango de i) $ 
+
+Luego se genera $Q_e$ al reemplazar i por s.lenght  %
+
+{$\\ B) \: I \land f_v \leq 0 \longrightarrow \neg B$ }
+
+$F_v \leq 0  \Longleftrightarrow   |s| \leq i $
+\vspace{2mm}
+ $\\ |s| \leq i \land I \longrightarrow i \leq   |s|  \equiv \: True (trivial \: por \: la \: definicion \: de \: I ) $ 
+\: \; \\
+
+$\\ C)\{I \land B\}S\{I\}$
+
+$I \land B \longrightarrow Wp(s1;s2;s3;i:=i+1,I) $
+
+$Wp(i:=i+1,I) \equiv def(i+1) \land_{L} I^{i}_{i+1}$
+$\\wp(sumaSenadores:=sumaSenadores + escrutinio\_Senadores,I^{i}_{i+1}) \equiv  0 \leq i <|escrutinio_Senadores| \land_{L} \\ I^{i^{sumaSenadores}}_{i+1_{sumaSenadores + escrutinio\_Senadores[i]}} \equiv 0\leq i < |S| \land_{L} \\ sumaPresidencial = \sum_{x=0}^{i} escrutinio[x]  \land sumaDiputados =\sum_{y=0}^{i} escrutinio[y] \land sumaSenadores =\sum_{yz=0}^{i-1} escrutinio[z] \equiv Q_{1} $
+$\\wp(sumaDiputados:=sumaDiputados + escrutinio\_ Diputados,I^{i}_{i+1}) \equiv  0 \leq i <|escrutinio\_Diputados| \land_{L} \\ I^{i^{sumaDiputados}}_{i+1_{sumaDiputados + escrutinio\_Diputados[i]}} \equiv 0\leq i < |S| \land_{L} \\ sumaPresidencial = \sum_{x=0}^{i} escrutinio[x]  \land sumaDiputados =\sum_{y=0}^{i-1} escrutinio[y] \land sumaSenadores =\sum_{z=0}^{i-1} escrutinio[z] \equiv Q_{2}\ $
+$\\wp(sumaSenadores:=sumaSenadores + escrutinio\_Senadores,I^{i}_{i+1}) \equiv  0 \leq i <|escrutinio_Senadores| \land_{L} \\ I^{i^{sumaSenadores}}_{i+1_{sumaSenadores + escrutinio\_Senadores[i]}} \equiv 0\leq i < |S| \land_{L} \\ sumaPresidencial = \sum_{x=0}^{i} escrutinio[x]  \land sumaDiputados =\sum_{y=0}^{i} escrutinio[y] \land sumaSenadores =\sum_{yz=0}^{i-1} escrutinio[z] \equiv Q_{1} $
+
+$\\wp(sumaPresidencial:=sumaPresidencial + escrutinio\_ Presidencial,I^{i}_{i+1}) \equiv  0 \leq i <|escrutinio\_Presidencial| \land_{L} \\ I^{i^{sumaPresidencial}}_{i+1_{sumaPresidencial + escrutinio\_Presidencial[i]}} \equiv 0\leq i < |S| \land_{L} \\ sumaPresidencial = \sum_{x=0}^{i-1} escrutinio[x]  \land sumaDiputados =\sum_{y=0}^{i-1} escrutinio[y] \land sumaSenadores =\sum_{z=0}^{i-1} escrutinio[z] \equiv Q_{3}\ $
+\\Luego
+$\\ I \land B \longrightarrow Q_{3}$
+
+$I \land B \longrightarrow 0\leq i < |S| \land_{L} \\ sumaPresidencial = \sum_{x=0}^{i-1} escrutinio[x]  \land sumaDiputados =\sum_{y=0}^{i-1} escrutinio[y] \land sumaSenadores =\sum_{z=0}^{i-1} escrutinio[z] \\ \equiv True $
+
+\vspace{5mm} 
+
+$\\ D) \{I \land B \land V_0 =  |s| - i \}  S  \{ |s| - i < V_0 \} $
+
+{I $\land$ B $\land$ $V_0$= $|s|$ - i $\longrightarrow$ wp($S_1$,$S_2$,$S_3$,$S_4$, $|s|$ - i $\leq$ $V_0$ ) }
+
+wp(i := i+1,  $|s|$ - i $\leq$ $V_0$) $\equiv$ ($|s|$-(i+1 $<$ $V_0$) $\equiv$ $|s|$ - i $<$ $V_0$ + 1
+
+$\text{wp}(sumaSen: sumaSen + \text{escrutinio\_Senadores}[i], |s| - i < V_0 + 1) \equiv \\ (0 \leq i \leq |escrutinio\_Senadores|) \land_L Q^{sumaSen}_{sumaSen+\text{escrutinio\_Senadores}[i]} \equiv (0 \leq i \leq |escrutinio\_Senadores|) \land_L (|s| - i < V_0 + 1)$
+
+$\text{wp}(sumaDip: sumaDip + \text{escrutinio\_Diputados}[i], |s| - i < V_0 + 1) \equiv \\ (0 \leq i \leq |escrutinio\_Diputados|) \land_L Q^{sumaDip}_{sumaDip+\text{escrutinio\_Diputados}[i]} \equiv (0 \leq i \leq |escrutinio\_Diputados|) \land_L (|s| - i < V_0 + 1)$
+
+$\text{wp}(sumaPres: sumaPres + \text{escrutinio\_Presidente}[i], |s| - i < V_0 + 1) \equiv \\ (0 \leq i \leq |escrutinio\_Presidente|) \land_L Q^{sumaPres}_{sumaPres+\text{escrutinio\_Presidente}[i]} \equiv (0 \leq i \leq |escrutinio\_Presidente|) \land_L (|s| - i < V_0 + 1)$
+
+\text Luego vale la implicaci\'on ya que $v_{0}$ = $|s| - i $ $\rightarrow$  $|s|$ - i $<$ $v_0$+1
+\text Luego es valido
+
+
+
+\subsubsection{obtenerSenadoresProvincia}
+
+\begin{itemize}
+	\item s=escrutinio
+      \item $P_c = \{ trans=0 \land i=2 \land (primero=0 \land segundo = 1) \lor (primero = 1 \land segundo=0) \}$
+\item $Q_c = (\forall j:\ent)( 0\leq j < |s| \longrightarrow_{L} ( s[j]\leq s[segundo] \longrightarrow s[segundo]<s[primero))$
+	\item $B = |s| > i$
+	\item $F_v = |s| - i$
+	\item $I = \{0 \leq i \leq |s| \land (\sum\limits_{x=0}^{|s| - 1} escrutinio\_Presidencial[x] \land \sum\limits_{y=0}^{|s| - 1} escrutinio\_Senadores[y] \land \sum\limits_{z=0}^{|s| - 1} escrutinio\_Diputados[z])\}$
+\end{itemize}
+
+$\\1) Pre \longrightarrow_{L} Wp(S_1;S_2;S_3,P_{c})$
+$\\ Wp(S_1,Wp(S_2,Wp(S_3,P_c)))$
+$\\ Primero \: Wp(S_3,P_c)\equiv Wp(i:=2,P_c) \equiv def(2) \land_{L} P_{c_{2}}^{i} \equiv True \land_{L} trans = 0 \land 2=2 \land \\ ((primero = 0 \land segundo = 1) \lor (primero = 1 \land segundo = 0)) \equiv Q^{1}$
+$Wp(S_{2},Q^1) \equiv def(B) \land_{L} (B \land Wp(P_1;P_2,Q^1) \lor \\  (\neg B \land Wp(P_3;P_4,Q^1)))$
+$ \\ Wp(P_1;P_2,Q^1) \equiv  Wp(P_1,Wp(P_2,Q^1))$
+$\\ Wp(P_2,Q^1) \equiv Wp(segundo :=1, Q^1) \equiv def(1) \land Q^{1^{segundo}}_1 \equiv trnas=0 \land (primero =1 \land 1=1) \lor (primero =1 \land 1=0) \equiv Q^2$
+$Wp(P_1,Q^2) \equiv Wp(primero :=0, Q^2) \equiv def(0) \land Q^{2^{primero}}_0 \equiv trans =0 \land ((0=0 \land 1=1) \lor (0=1 \land 1=0)) \equiv trans=0 \equiv Q^3$
+$Luego \: Wp(S_2,Q^1) \equiv (B \land trans = 0) \lor (\neg B \land Wp(P_3,P4,Q^1)) $
+$\\ Wp(P_3;P_4,Q^1) \equiv Wp(P_3,Wp(P_4,Q^1))$
+$\\ Wp(P_4, Q^1) \equiv Wp(segundo :=0, Q^1) \equiv def(0) \land Q^{1^{segundo}}_{0} \equiv trans=0 \land ((primero=0 \land 0 = 1) \lor (primero=1 \land 0=0)) \equiv Q^4$
+$ Wp(P_3,Q^4) \equiv Wp(primero=1,Q^4) \equiv def(1) \land Q^{4^{primero}}_{1} \equiv trans = 0 \land ((1=0 \land False )\lor (1=1 \land True)) \equiv trans = 0 \equiv Q^3$
+$Entonces \: Wp(S_2,Q^1) \equiv ((B \land trans=0) \lor (\neg B \land trans=0)) \equiv (escrutinio[0]>escrutinio[1] \land trans=0) \lor (escrutinio[0]\leq escrutinio[1] \land trans=0) \equiv Q^5$
+$\\Por ultimo Wp(S_1,Q^5) \equiv Wp(trans:=0,Q^5) \equiv def(0) \land Q^{5^{trans}}_{0} \equiv (escrutinio[0] > escrutinio[1]\land 0=0) \lor (escrutinio[0] \leq escrutiniop[1] \land 0=0) \equiv True$ 
 \end{document}
+
+
