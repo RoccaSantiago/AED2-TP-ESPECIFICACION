@@ -42,7 +42,7 @@
 		
 		\pred{EleccionValida}{\In escrutinio: \TLista{\ent}}{nohayRepetidos(escrutinio) \land cantVotosValidos(escrutinio) \land escrutinioValido(escrutinio)}
 		
-		\pred{umbralElectoral}{\In escrutinioSen : \TLista{\ent}}{((\forall x: \ent)(0 \leq x < |escrutinio|) \: \longrightarrow_{L } (escrutinioSen[x] > 3))}
+		\pred{umbralElectoral}{\In escrutinioDip : \TLista{\ent}}{((\exists x: \ent)(0 \leq x < |escrutinioDip|) \: \land_{L} (escrutinioDip[x] > (|escrutinioDip| * 3) / 100))}
 
         \pred{minimoDePartidos}{\In escrutinio: \TLista{\ent}}{|escrutinio| \geq 3}
 
@@ -64,13 +64,11 @@
 	
 				\requiere{eleccionValida(escrutinio))}
 	
-				\asegura{res=\neg((partidoMayorA45\%(escrutinio))\lor (partidoMayorA40\%ConDiferencia(escrutinio)))}
+				\asegura{res = True \longleftrightarrow \neg((partidoMayorA45\%(escrutinio))\lor (partidoMayorA40\%ConDiferencia(escrutinio)))}
 
 			\end{proc}
 
 		\subsubsection{Predicados Especificos}
-
-			\pred{partidoMayorA45\%}{\In escrutinio : \TLista{\ent}}{(\exists n:\ent)(0 \leq n < |escrutinio|-1 \land_{ L }(porcentajeDeVotos(escrutinio,escrutinio[n])>45)}
 
 
 			\pred{partidoMayorA40\%ConDiferencia}{\In escrutinio : \TLista{\ent}}{(\exists n:\ent)(0 \leq n < |escrutinio| -1 \land_{ L }(porcentajeDeVotos(escrutinio,escrutinio[n])>40) \: \land_{ L } \\ \neg(\forall x:\ent)(0\leq x < |escrutinio|-1 \land  (\neg(n=x) \longrightarrow_{ L } ((escrutinio[n] - escrutinio[x])>10)) }
@@ -83,7 +81,7 @@
 		\subsubsection{Main}
 			
 			\begin{proc}{hayFraude}{(\In escrutinio\_Presidente: \TLista{\ent}, \In escrutinio\_Senadores: \TLista{\ent}⟩, \In escrutinio\_Diputados: \TLista{\ent}}{\bool}
-				\requiere{umbralElectoral(escrutinio\_Senadores)\: \land\:eleccionValida(escrutinio\_Presidente) \: \land\:\\ eleccionValida(escrutinio\_Senadores) \: \land \: eleccionValida(escrutinio\_diputados) \land \\ minimoDePartidos(escrutinio\_Senadores) \land \\ 
+				\requiere{eleccionValida(escrutinio\_Presidente) \: \land\: eleccionValida(escrutinio\_Senadores) \: \land \: \\ eleccionValida(escrutinio\_diputados) \land minimoDePartidos(escrutinio\_Senadores) \land \\ 
 (|escrutinio\_Presidente| = |escrutinio\_Senadores| = |escrutinio\_Diputados|)}
 				
 				\asegura{res=\neg(((|sumaDeVotos(escrutinio\_Presidente) = sumaDeVotos(escrutinio\_Senadores)) \land \\ (sumaDeVotos(escrutinio\_Presidente) = sumaDeVotos(escrutinio\_Diputados)))}
@@ -145,7 +143,8 @@
 			
 			\begin{proc}{(\In cant\_bancas: \ent, \In listas: \TLista{\TLista{dni:\ent \times genero: \ent}}}{\bool}
 			
-				\requiere{(cant\_bancas>0) \: \land (dni>0) \: \land \:  (1\leq genero \geq 2)}
+				\requiere{(cant\_bancas>0) \: \land (\forall \: x:\ent)
+    (0\leq x < |listas| \longrightarrow_{L} listas[x]_{0} > 0 \: \land \: 1 \leq listas[x]_{1} \leq 2)}
 				\asegura{(\forall \: \: partido:\ent)(0\leq partido<|listas|) \longrightarrow_{L} (cantCandidatosCorrecta(cant\_bancas,\: listas[partido])\land altGenero(listas[partido])}			
 
 			\end{proc}
@@ -154,7 +153,7 @@
 		
 			\pred{cantCandidatosCorrecta}{cant\_bancas: \ent, partido: \TLista{dni:\ent \times genero: \ent}}{cant\_bancas=|partido|}
 
-			\pred{altGenero}{partido: \TLista{dni:\ent \times genero: \ent}}{(((\forall n: \ent)(n>0))\longrightarrow_{L} ( ((n\mod2=0)\longrightarrow_{L} (partido[n,1]=1)) \land_{L } ((n\mod2=1)\longrightarrow_{L} (partido[n,1]=2)) \lor_{L} ((n \mod 2 = 0) \longrightarrow_{L} (partido[n,1]=2 \land_{L} (n \mod 2=1) \longrightarrow_{L} partido[n,1]=1))}
+			\pred{altGenero}{partido: \TLista{dni:\ent \times genero: \ent}}{(((\forall n: \ent)(0 \leq n < |partido|))\longrightarrow_{L} ( ((n\mod2=0)\longrightarrow_{L} (partido[n]_1=1)) \land_{L } ((n\mod2=1)\longrightarrow_{L} (partido[n]_1=2)) \lor_{L} ((n \mod 2 = 0) \longrightarrow_{L} (partido[n]_1=2 \land_{L} (n \mod 2=1) \longrightarrow_{L} partido[n]_1=1))}
 	
 
 
@@ -173,7 +172,7 @@
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
 					res := true
-					tans := 0
+					trans := 0
 					primero := 0
 					segundo := 0
 					i := 0
@@ -241,9 +240,9 @@
 		\subsubsection{obtenerSenadoresEnProvincia}
 			\begin{minipage}[t]{\textwidth}
 				\begin{lstlisting}[caption={()},label=code:for]
-						
+
 						trans := 0
-						if (s[0] > s[1]):
+						if (escrutinio[0] > escrutinio[1]):
     							primero := 0
     							segundo := 1
 						else:
@@ -285,8 +284,8 @@
 						i := i + 1
 					endwhile
 					i := 0
-					j := 1
 					while (listas.size() > i) do
+                        j := 1
 						genero := listas[i][0][1]
 						while (listas[i].size() > j) do
 							if (listas[i][j][1] == genero) 
@@ -295,7 +294,7 @@
 								genero := listas[i][j][1]
 								j := j + 1
 							endif
-						endwhile
+					    endwhile
 						i := i + 1
 					endwhile
 				\end{lstlisting}
@@ -304,42 +303,46 @@
 	\subsection{Demostraciones de correctitud}
 \subsubsection{hayFraude}
 \begin{itemize}
-	\item s=escrutinio \_presidencial
-    \item $P_c = \{ i=0 \land sumaPres=0 \land sumaDip=0 \land sumaSen=0 \}$
-	\item $Q_c = \left\{ \sum\limits_{x=0}^{|s| - 1} escrutinio\_Presidencial[x] \land \sum\limits_{y=0}^{|s| - 1} escrutinio\_Senadores[y] \land \sum\limits_{z=0}^{|s| - 1} escrutinio\_Diputados[z] \right\}$
-	\item $B = |s| > i$
-	\item $F_v = |s| - i$
-	\item $I = \{0 \leq i \leq |s| \land (\sum\limits_{x=0}^{|s| - 1} escrutinio\_Presidencial[x] \land \sum\limits_{y=0}^{|s| - 1} escrutinio\_Senadores[y] \land \sum\limits_{z=0}^{|s| - 1} escrutinio\_Diputados[z])\}$
+
+        \item $P_c : i=0 \land sumaPres=0 \land sumaDip=0 \land sumaSen=0$
+	\item $Q_c : \sum\limits_{x=0}^{|s| - 1} escrutinio\_Presidencial[x] = sumaPres \land \sum\limits_{y=0}^{|s| - 1} escrutinio\_Senadores[y] = sumaSen \\ \land \sum\limits_{z=0}^{|s| - 1} escrutinio\_Diputados[z] = sumaDip$
+	\item $B : |s| > i$
+	\item $F_v : |s| - i$
+	\item $I : 0 \leq i \leq |s| \land (\sum\limits_{x=0}^{|s| - 1} escrutinio\_Presidencial[x] = sumaPres \land \\ \sum\limits_{y=0}^{|s| - 1} escrutinio\_Senadores[y] = sumaSen \land \sum\limits_{z=0}^{|s| - 1} escrutinio\_Diputados[z] = sumaDip)$
 \end{itemize}
 \vspace{6mm} 
-{1. Pre $\longrightarrow_{L}$ wp(sumaPres := 0; sumaDip := 0; sumaSen := 0; i :=0, Pc) } $ \equiv $
+\begin{enumerate}
+    \item  Pre $\longrightarrow_{L}$ wp(sumaPres := 0; sumaDip := 0; sumaSen := 0; i :=0, Pc)
+    \vspace{3mm} 
+
+    $wp(sumaDip := 0, \: wp(sumaDip := 0, \: wp(sumaSen := 0, \: wp(i := 0, \: P_c))))$
+    
+    \quad $wp(i := 0, P_c) \equiv def(0) \land_L  P^i_0 \equiv$
+
+    \quad\quad $\equiv True \land_v 0 = 0 \land sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0 $
+
+    \quad\quad $\equiv sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0 \equiv p1$
+
+    \quad $wp(sumaSen := 0, \: p1) \equiv def(0) \land_L p1^{sumaSen}_0$
+
+    \quad\quad $\equiv True \land_L sumaPres = 0 \land sumaDip = 0 \land 0 = 0$
+
+    \quad\quad $ \equiv sumaPres = 0 \land sumaDip = 0 \equiv p2$
+
+    \quad $wp(sumaDip := 0, \: p2) \equiv def(0) \land_L p2^{sumaDip}_0$
+
+    \quad\quad $\equiv True \land_L sumaPres = 0 \land 0 = 0$
+
+    \quad\quad $\equiv sumaPres = 0 \equiv p3$
+
+    \quad $wp(sumaPres := 0, p3) \equiv def(0) \land_L p3^{sumaPres}_0 $
+
+    \quad\quad $\equiv True \land_L 0 = 0$  
+
+    \quad\quad$ \equiv True $ 
+
 \vspace{3mm} 
-
-$wp(sumaDip := 0, wp(sumaDip := 0, wp(sumaSen := 0, wp(i := 0, P_c)))) $
-
-$wp(i := 0, P_c) \equiv def(0) \land_L  P^i_0$
-
-\quad\quad\quad$ \equiv 0 = 0 \land sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0 $ %alinear bien esto
-
-$ \equiv sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0 \equiv Q^1 $  %alinear bien esto
-
-$wp(sumaSen := 0, Q^1) \equiv def(0) \land_L Q^{sumaSen}_0 $%revisar a que estan elevados estos sumasen sumadip potencia
-
-$\equiv sumaPres = 0 \land sumaDip = 0 \land 0 = 0 \equiv Q^2 $  %alinear bien esto
-
-$wp(sumaSen := 0, Q^2) \equiv def(0) \land_L Q^{sumaDip}_0 $
-
-$\equiv sumaDip = 0 \land 0 = 0 \equiv Q^3 $  %alinear bien esto
-
-$wp(sumaPres := 0, Q^3) \equiv def(0) \land_L Q^{sumaPres}_0 $
-
-$\equiv 0 = 0 $  %alinear bien esto
-
-$ \equiv True $ %alinear bien esto
-
-
-\vspace{3mm} 
-{Pre $\longrightarrow_{L}$ wp(sumaPres := 0; sumaDip := 0; sumaSen := 0; i :=0; Pc) = True }
+{Pre $\longrightarrow_{L}$ wp(sumaPres := 0; sumaDip := 0; sumaSen := 0; i :=0; Pc) \\ es verdadero porque Pre siempre implica a True }
 \vspace{5mm} 
 
 {2. $Q_c \longrightarrow_{L} \text{wp}(res = \text{True}; \text{If}(\ldots); Q) \equiv \text{True}$} %revisar if, esto tenia que estar como el 1 Pre
@@ -416,7 +419,7 @@ $\text{wp}(sumaPres: sumaPres + \text{escrutinio\_Presidente}[i], |s| - i < V_0 
 \text Luego vale la implicaci\'on ya que $v_{0}$ = $|s| - i $ $\rightarrow$  $|s|$ - i $<$ $v_0$+1
 \text Luego es valido
 
-
+\end{enumerate}
 
 \subsubsection{obtenerSenadoresProvincia}
 
