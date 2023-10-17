@@ -2,7 +2,7 @@
 
 \input{AEDmacros}
 \usepackage{caratula} % Version modificada para usar las macros de algo1 de ~> https://github.com/bcardiff/dc-tex
-
+\usepackage{xcolor}
 
 \titulo{Trabajo pr\'actico 1: Especificac\'ion y WP}
 \subtitulo{Elecciones Nacionales}
@@ -53,7 +53,11 @@
 
 		\aux{porcentajeDeVotos}{\In escrutinio: \TLista{\ent}, \In votosPartido: \ent}{\float}{sumaDeVotos(escrutinio)^{-1} \; * \; votosPartido \; * \; 10^{2})}
 
-		\aux{bancasDe}{\In indicePartido: \ent, \In bancas, \In dHont  \TLista{\TLista{\ent}}}{\ent}{ \\ \sum\limits_{p=0}^{bancas - 1} if \: cocienteGanador(indicePartido, p, dHont) \: then \: 1 \:  else \: 0}
+		\aux{bancasDe}{\In indicePartido: \ent, \In bancas, \In dHondt  \TLista{\TLista{\ent}}}{\ent}{ \\ \sum\limits_{p=0}^{bancas - 1} if \: cocienteGanador(indicePartido, p, dHondt) \: then \: 1 \:  else \: 0}
+
+        \aux{bancasGanadas}{\In dH: \TLista{\TLista{\ent}},\In max: \ent, \In r: \ent}{\ent}{\\ \sum_{j=0}^{dH[r]-1} if \; max>MaxAnteriores(dH, dH[r][j]) \; then \; 1 \; else \; 0}
+
+        \aux{MaxAnteriores}{\In dH: \TLista{\TLista{\ent}},\In max: \ent, \In r: \ent}{\ent}{\sum^{|dH|-1}_{j=0} \sum^{dH[j]-1}_{i=0} if \; dH[j][i]>r \; then \; 1 \; else \; 0}
 	
 
 
@@ -80,11 +84,11 @@
 \subsection{hayFraude}
 		\subsubsection{Main}
 			
-			\begin{proc}{hayFraude}{(\In escrutinio\_Presidente: \TLista{\ent}, \In escrutinio\_Senadores: \TLista{\ent}⟩, \In escrutinio\_Diputados: \TLista{\ent}}{\bool}
+			\begin{proc}{hayFraude}{\In escrutinio\_Presidente: \TLista{\ent}, \In escrutinio\_Senadores: \TLista{\ent}, \In escrutinio\_Diputados: \TLista{\ent}}{\bool}
 				\requiere{eleccionValida(escrutinio\_Presidente) \: \land\: eleccionValida(escrutinio\_Senadores) \: \land \: \\ eleccionValida(escrutinio\_diputados) \land minimoDePartidos(escrutinio\_Senadores) \land \\ 
 (|escrutinio\_Presidente| = |escrutinio\_Senadores| = |escrutinio\_Diputados|)}
 				
-				\asegura{res=\neg(((|sumaDeVotos(escrutinio\_Presidente) = sumaDeVotos(escrutinio\_Senadores)) \land \\ (sumaDeVotos(escrutinio\_Presidente) = sumaDeVotos(escrutinio\_Diputados)))}
+				\asegura{res=\neg(((sumaDeVotos(escrutinio\_Presidente) = sumaDeVotos(escrutinio\_Senadores)) \land \\ (sumaDeVotos(escrutinio\_Presidente) = sumaDeVotos(escrutinio\_Diputados)))}
 			
 			\end{proc}
 
@@ -115,7 +119,7 @@
 			\begin{proc}{calcularDHondtEnProvincia}{\In cant\_bancas: \ent, \In escrutinio: \TLista{\ent} } {\TLista{\TLista{\ent}}}
 				 
 				\requiere{eleccionValida(escrutinio) \land umbralElectoral(escrutinio) \land cant\_bancas>0)}
-				\asegura{((\forall \: x:\ent)(0\leq n < cant\_bancas) \land_{L} (\forall \: x:\ent)(0\leq n <|escrutinio|))\longrightarrow_{L } \: (res[x][n]=\frac{escrutinio[x]}{n+1})}
+				\asegura{((\forall \: i:\ent)(0\leq i < cant\_bancas) \land_{L} (\forall \: j:\ent)(0\leq j <|escrutinio|))\longrightarrow_{L } \\ (res[j][i]=\frac{escrutinio[j]}{i+1} \land \frac{escrutinio[j]}{i+1} \geq 0)}
 
 			\end{proc}
 
@@ -123,15 +127,35 @@
 
 	\subsection{obtenerDiputadosEnProvincia}
 		\subsubsection{Main}
-			\begin{proc}{obtenerDiputadosEnProvincia}{\In cant\_bancas: \ent, \In escrutinio: \TLista{\ent}, \In dHondt: \TLista{\TLista{\ent}}} {\TLista{\ent}}
+			\begin{proc}{obtenerDiputadosEnProvincia}{\In cant\_bancas: \ent, \In escrutinio: \TLista{\ent}, \In dHondt: \TLista{\TLista{\ent}}}{\TLista{\ent}}
 				 
-				\requiere{eleccionValida(escrutinio) \land umbralElectoral(escrutinio)}
-				\asegura{(\forall \: r:\ent)(0\leq r < |escrutinio| - 1 \longrightarrow_{L} res[r] = bancasDe(r, cant\_bancas, dHondt))}
-			\end{proc}
+				\requiere{eleccionValida(escrutinio) \land umbralElectoral(escrutinio) \land coeficientesDistintos(dHondt) \\ \land esMatriz(dHondt) \land
+                matrizDelEscrutinio(dHondt, \: cant\_bancas, \: escrutinio)}				
+                    \asegura{(\forall \: r:\ent)(0\leq r < |escrutinio| - 1 \longrightarrow_{L} res[r] = bancasGanadas(dHondt, cant\_bancas, r)) \; \land \; |res| = |dHondt|}
+    
+	        \end{proc}
 
-	
-			\pred{cocienteGanador}{\In indicePartido: \ent, \In bancaEnDisputa: \ent, \In dHont: \TLista{\TLista{\ent}}}{res = True \longleftrightarrow
-(\forall \: i: \ent)(0 \leq i < |dHont| -1 \land \neg(i = indicePartido) \longrightarrow_{L } dHont[bancaEnDisputa][indicePartido] > dHont[bancaEnDisputa][i])}
+         \subsubsection{Predicados Especificos}
+
+        \pred{esMatriz}{\In dH: \TLista{\TLista{\ent}}}{True \longleftrightarrow 
+        (\forall i : \ent)(0 \leq i < |dH| - 1 \longrightarrow |dH[i]| = |dH[i+1]|) 
+        }
+
+        \pred{matrizDelEscrutinio}{\In dH: \TLista{\TLista{\ent}}, \In cant\_bancas: \ent, \In escrutinio: \TLista{\ent}}{True \longleftrightarrow 
+        ((\forall \: i:\ent)(0\leq i < cant\_bancas) \land_{L} (\forall \: j:\ent)(0\leq j <|escrutinio|))\longrightarrow_{L } dH[j][i]=\frac{escrutinio[j]}{i+1}) 
+        }
+    
+
+   
+   
+   \pred{coeficientesDistintos}{\In DHondt: \TLista{\TLista{\ent}}}{
+   (\forall j:\ent)(0\leq j < |DHondt| \longrightarrow_{L} ((\forall i:\ent)(0\leq i<|DHondt[j]|\longrightarrow_{L} \neg ((\exists z:\ent)(0\leq z <|DHondt| \land  (z\neq j) \land_{L} \\ ((\exists t:\ent)(0\leq t<|DHondt[z]| \land (t\neq i) \land_{L} DHondt[z][t] = DHondt[j][i]))))))
+    }
+   \pred{todosPositivos}{\In DHondt : \TLista{\TLista{\ent}}}{(\forall j:\ent)(0\leq j <|DHondt|\longrightarrow_{L} ((\forall i:\ent)(0\leq i < |DHondt[j]|\longrightarrow_{L} DHondt[j][i]>0)))}
+   
+   
+   
+   
 
 
 
@@ -170,7 +194,7 @@
 		\subsubsection{hayBallotage}
 		% Para hacer que quede todo en una misma linea, se puede usar minipage
 			\begin{minipage}[t]{\textwidth}
-				\begin{lstlisting}[caption={()},label=code:for]
+				\begin{lstlisting}[label=code:for]
 					res := true
 					trans := 0
 					primero := 0
@@ -217,7 +241,9 @@
 
 		\subsubsection{hayFraude}
 			\begin{minipage}[t]{\textwidth}
-				\begin{lstlisting}[caption={()},label=code:for]
+				\begin{lstlisting}[label=code:for]
+    
+                        res := false
 						i := 0
 						SumaSen := 0
 						sumaDip := 0
@@ -228,18 +254,17 @@
 							sumaSen := sumaSen + escrutinio_Senadoresl[i]
 							i := i + 1
 						endwhile
-						res := true
 						if (sumaPres = sumaDip && sumaPres = sumaSen) then 
-							res := false
-						else:
 							skip
+						else:
+							res := true
 						endif
 				\end{lstlisting}
 			\end{minipage}
 
 		\subsubsection{obtenerSenadoresEnProvincia}
 			\begin{minipage}[t]{\textwidth}
-				\begin{lstlisting}[caption={()},label=code:for]
+				\begin{lstlisting}[label=code:for]
 
 						trans := 0
 						if (escrutinio[0] > escrutinio[1]):
@@ -265,14 +290,13 @@
 							endif
 							i := i + 1
 						endwhile	
-						res_{0}:= primero
-                        res{1}:= segundo
+						res := (primero,segundo)
 				\end{lstlisting}
 			\end{minipage}
 	
 		\subsubsection{validarListasDiputadosEnProvincia}
 			\begin{minipage}[t]{\textwidth}
-				\begin{lstlisting}[caption={()},label=code:for]
+				\begin{lstlisting}[label=code:for]
 					res := true
 					i := 0
 					while (listas.size() > i) do
@@ -303,23 +327,34 @@
 	\subsection{Demostraciones de correctitud}
 \subsubsection{hayFraude}
 \begin{itemize}
-
-        \item $P_c : i=0 \land sumaPres=0 \land sumaDip=0 \land sumaSen=0$
-	\item $Q_c : \sum\limits_{x=0}^{|s| - 1} escrutinio\_Presidencial[x] = sumaPres \land \sum\limits_{y=0}^{|s| - 1} escrutinio\_Senadores[y] = sumaSen \\ \land \sum\limits_{z=0}^{|s| - 1} escrutinio\_Diputados[z] = sumaDip$
-	\item $B : |s| > i$
-	\item $F_v : |s| - i$
-	\item $I : 0 \leq i \leq |s| \land (\sum\limits_{x=0}^{|s| - 1} escrutinio\_Presidencial[x] = sumaPres \land \\ \sum\limits_{y=0}^{|s| - 1} escrutinio\_Senadores[y] = sumaSen \land \sum\limits_{z=0}^{|s| - 1} escrutinio\_Diputados[z] = sumaDip)$
+        \item e1 : escrutinioPresidente, \: e2 : escrutinioSenadores, \: e3 : escrutinioDiputados
+        \item $P_c : res=False \land i=0 \land sumaPres=0 \land sumaDip=0 \land sumaSen=0$
+        
+	\item $Q_c : \sum\limits_{i=0}^{|e1| - 1} e1[i] = sumaPres \land \sum\limits_{i=0}^{|e2| - 1} e2[i] = sumaSen \land \sum\limits_{i=0}^{|e3| - 1} e3[i] = sumaDip \land \\ 
+ (res = False \longleftrightarrow sumaPres = SumaDip \land sumaPres = sumaSen)$
+	\item $B : |e1| > i$
+	\item $F_v : |e1| - i$
+        \item $Post : res = \neg{(sumaDeVotos(e1) = sumaDeVotos(e3) \land sumaDeVotos(e1) = sumaDeVotos(e2))}$
+	\item $I : 0 \leq i \leq |e1| \land (\sum\limits_{j=0}^{i - 1} e1[j] = sumaPres \land \sum\limits_{j=0}^{i - 1} e2[j] = sumaSen \land \sum\limits_{j=0}^{i - 1} e3[j] = sumaDip) \land \\
+    (sumaPres = sumaDip  \land sumaPres = sumaSen \longleftrightarrow res = False)$
+    
 \end{itemize}
 \vspace{6mm} 
 \begin{enumerate}
-    \item  Pre $\longrightarrow_{L}$ wp(sumaPres := 0; sumaDip := 0; sumaSen := 0; i :=0, Pc)
+    \item  Pre $\longrightarrow_{L}$ wp(sumaPres := 0; sumaDip := 0; sumaSen := 0; i := 0; res := False, Pc)
     \vspace{3mm} 
 
-    $wp(sumaDip := 0, \: wp(sumaDip := 0, \: wp(sumaSen := 0, \: wp(i := 0, \: P_c))))$
-    
-    \quad $wp(i := 0, P_c) \equiv def(0) \land_L  P^i_0 \equiv$
+    $wp(sumaDip := 0, \: wp(sumaDip := 0, \: wp(sumaSen := 0, \: wp(i := 0, \: wp(res := False, \: P_c))))$
 
-    \quad\quad $\equiv True \land_v 0 = 0 \land sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0 $
+    \quad $wp(res := False, P_c) \equiv def(False) \land_L  Pc^{res}_{False} \equiv$
+
+    \quad\quad $\equiv True \land_L (False = False \land i = 0 \land sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0)$
+
+    \quad\quad $\equiv i = 0 \land sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0 \equiv p0$
+    
+    \quad $wp(i := 0, p0) \equiv def(0) \land_L  p0^i_0 \equiv$
+
+    \quad\quad $\equiv True \land_L 0 = 0 \land sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0 $
 
     \quad\quad $\equiv sumaPres = 0 \land sumaDip = 0 \land sumaSen = 0 \equiv p1$
 
@@ -342,109 +377,277 @@
     \quad\quad$ \equiv True $ 
 
 \vspace{3mm} 
-{Pre $\longrightarrow_{L}$ wp(sumaPres := 0; sumaDip := 0; sumaSen := 0; i :=0; Pc) \\ es verdadero porque Pre siempre implica a True }
+{Pre $\longrightarrow_{L}$ wp(sumaPres := 0; sumaDip := 0; sumaSen := 0; i :=0; res := False, Pc) \\ es verdadero porque Pre siempre implica a True }
 \vspace{5mm} 
 
-{2. $Q_c \longrightarrow_{L} \text{wp}(res = \text{True}; \text{If}(\ldots); Q) \equiv \text{True}$} %revisar if, esto tenia que estar como el 1 Pre
+\item $Q_c \longrightarrow_{L} \text{wp}(\text{If}(\ldots), \: Post)$ 
+\vspace{3mm}
+
+\quad $wp(\text{If}(\dots), Post) \equiv$
+
+\quad\quad $B : sumaPres = sumaDip \land sumaPres = sumaSen$
+
+\quad\quad $\equiv def(B) \land_L ((B \land \textcolor{red}{wp}(Skip, \: Post) \lor (\neg B \land \textcolor{blue}{wp}(res := True , \: Post))))$
+
+\quad\quad $\equiv True \land_L ((B \land \textcolor{red}{wp}(Skip, \: Post) \lor (\neg B \land \textcolor{blue}{wp}(res := True, \: Post))))$
+
+\quad\quad\quad $\textcolor{red}{wp}(Skip, \: Post) \equiv Post$
+
+\quad\quad\quad $\textcolor{blue}{wp}(res := True, \: Post) \equiv$
+
+\quad\quad\quad\quad $\equiv def(True) \land_v Post^{res}_{True}$
+
+\quad\quad\quad\quad $\equiv True \land_v Post^{res}_{True}$
+
+\quad\quad\quad\quad $\equiv True = \neg{(sumaDeVotos(e1) = sumaDeVotos(e3) \: \land sumaDeVotos(e1) = sumaDeVotos(e2))}$
+
+\quad\quad\quad\quad $\textcolor{blue}{\equiv} \: True = \neg(\sum\limits_{i=0}^{|e1| - 1} e1[i] = \sum\limits_{i=0}^{|e3| - 1} e3[i] \: \land
+ \sum\limits_{i=0}^{|e1| - 1} e1[i] = \sum\limits_{i=0}^{|e2| - 1} e2[i]) \equiv \textcolor{purple}{C}$ 
+
+\quad\quad $\equiv True \land_L ((B \land Post) \lor (\neg B \land \textcolor{blue}{wp}(res := True, \: Post))) \equiv 
+((B \land Post) \lor (\neg{B} \land \textcolor{purple}{C})) \equiv$
+
+\quad\quad $\equiv ((sumaPres = sumaDip \land sumaPres = sumaSen \land Post) \: \lor$ 
+
+\quad\quad\quad $(\neg{(sumaPres = sumaDip \land sumaPres = sumaSen) \land \textcolor{purple}{C}}))$
+
+\vspace{1mm} 
+
+\quad $ wp(\text{If}(\dots), Post) \equiv ((sumaPres = sumaDip \land sumaPres = sumaSen \land Post) \: \lor$ 
+
+\quad\quad $(\neg{(sumaPres = sumaDip \land sumaPres = sumaSen) \land \textcolor{purple}{C}}))$
 
 \vspace{3mm} 
-$ MM = \{ \sum\limits_{x=0}^{i - 1} escrutinio\_Presidencial[x] =\sum\limits_{y=0}^{i - 1} escrutinio\_Diputados[y] \land $ 
-\\ $\sum\limits_{x=0}^{i - 1} escrutinio\_Presidencial[x] = \sum\limits_{z=0}^{i - 1} escrutinio\_Senadores[z] \} $ 
 
-\vspace{2mm} 
+Recordatorio de $Q_C$ : $\sum\limits_{i=0}^{|e1| - 1} e1[i] = sumaPres \land \sum\limits_{i=0}^{|e2| - 1} e2[i] = sumaSen \land \sum\limits_{i=0}^{|e3| - 1} e3[i] = sumaDip \land \\ 
+ (res = False \longleftrightarrow sumaPres = SumaDip \land sumaPres = sumaSen)$
 
-$wp(res := True, wp(If ...; Q)) \equiv $ %alinear bien esto
+\vspace{1mm} 
 
-$wp(If ..., Q) \equiv ((sumaPres = sumaDip  \land  sumaPres = sumaSen   \land  wp(res := False, Q) \lor (def (A) \land \neg MM \land wp(skip,Q)) \equiv $
+Veamos si $Q_c \longrightarrow_{L} \text{wp}(\text{If}(\ldots), \: Post)$ por partes. Asumimos $Q_c $ verdadero. Vemos que nos basta con probar una de \\ las ramas del wp, que se separa en dos casos: cuando se cumple B o $\neg{B}$. Sabemos que \\ $(res = False \longleftrightarrow sumaPres = SumaDip \land sumaPres = sumaSen)$ entonces sumaPres = SumaDip, \\ sumaPres = sumaSen y res = False. \\ Si probamos $Q_C \longrightarrow_{L} Post$, queda probada la implicación porque es verdadera la rama B del wp. \\
+Sabemos que Post $\equiv res = \neg(\sum\limits_{i=0}^{|e1| - 1} e1[i] = \sum\limits_{i=0}^{|e3| - 1} e3[i] \: \land
+ \sum\limits_{i=0}^{|e1| - 1} e1[i] = \sum\limits_{i=0}^{|e2| - 1} e2[i])$
 
-$(MM \land Q^{res}_{\text{False}}) ) \lor (\neg MM \land Q) \equiv $
-\vspace{2mm} \vspace{2mm} 
+ 
+Las sumatorias, sabemos por $Q_c$, que son iguales a la variable con el resultado de la suma, por ejemplo: $\sum\limits_{i=0}^{|e1| - 1} e1[i]$ = sumaPres y que sumaPres = sumaDip y sumaPres = sumaSen. Ademas, sabemos que res = False. Entonces: \\ 
 
-$(M \land False = \neg MM ) \lor (\neg MM \land res := \neg MM ) \equiv$
-\vspace{2mm} 
+\begin{center}
+    $Post \equiv
+res = \neg(\sum\limits_{i=0}^{|e1| - 1} e1[i] = \sum\limits_{i=0}^{|e3| - 1} e3[i] \: \land \sum\limits_{i=0}^{|e1| - 1} e1[i] = \sum\limits_{i=0}^{|e2| - 1} e2[i])
+$
+    $Post \equiv False = \neg{(sumaPres = sumaDip \land sumaPres = sumaSen)}$
+    
+    $Post \equiv False = \neg{(True \land True)}$
 
-$ (M \land True = MM ) \lor (\neg M \land res := \neg MM ) \equiv Q_2$\vspace{2mm} 
+    $Post \equiv False = False$
 
-$wp(res:true, Q_2) \equiv$\vspace{2mm} \vspace{2mm} 
+    $Post \equiv True$
 
-$Q^{res}_{\text{True}} \equiv (MM \land True = MM) \lor (\neg MM \land False=MM)\equiv True $
-\vspace{2mm} \vspace{2mm} \\
+\end{center}
 
-${3. P_c \longrightarrow_{L} wp(while ... , Q)}$ 
-Trivial, hace la sumatoria 0
-\vspace{3mm} 
+Entonces $Q_c \longrightarrow_{L} \text{wp}(\text{If}(\ldots), \: Post)$
+\item $P_c \longrightarrow_{L}$ wp(\text{While}(\ldots), Qc) mediante el teorema del invariante.
 
-$\\ A) \; \: I \land \neg B  \longrightarrow Q_c $ 
+e1 : escrutinioPresidente, \: e2 : escrutinioSenadores, \: e3 : escrutinioDiputados
 
- $i \geq |s| \Longleftrightarrow i = |s| (por rango de i) $ 
+\begin{enumerate}
+    \item $P_c \longrightarrow I$ \\
+    $P_c : res=False \land i=0 \land sumaPres=0 \land sumaDip=0 \land sumaSen=0$ \\
+    $I : 0 \leq i \leq |e1| \land (\sum\limits_{j=0}^{i - 1} e1[j] = sumaPres \land \sum\limits_{j=0}^{i - 1} e2[j] = sumaSen \land \sum\limits_{j=0}^{i - 1} e3[j] = sumaDip) \land \\
+    (sumaPres = sumaDip  \land sumaPres = sumaSen \longleftrightarrow res = False) 
+    $
+    \begin{itemize}
+        \item Como i = 0, se cumple que 0 $\leq$ i $\leq |e1|$
+        \item Como i = 0, las sumatorias suman 0 (suma desde un limite a otro menor) y tenemos:
+        \begin{center}
+            0 = sumaPres $\land$ 0 = sumaSen $\land$ 0 = sumaDip 
+        \end{center}
+        \item Como las tres variables, sumaPres, sumaDip y sumaSen son iguales a 0, sumaPres = sumaDip y sumaPres = sumaSen. Res tambien es False, por lo que es verdadera la ultima condicion del invariante.
+    \end{itemize}
+    Entonces $P_c \longrightarrow I$
+    
+    
+    \item $I \land \neg{B} \longrightarrow Q_c$ \\
+    
+    $I : 0 \leq i \leq |e1| \land (\sum\limits_{j=0}^{i - 1} e1[j] = sumaPres \land \sum\limits_{j=0}^{i - 1} e2[j] = sumaSen \land
+    \sum\limits_{j=0}^{i - 1} e3[j] = sumaDip) \land \\
+    (sumaPres = sumaDip  \land sumaPres = sumaSen \longleftrightarrow res = False)$ \\
+    
+    $\neg{B} : \neg{(|e1| > i)} \equiv |e1| \leq i $ \\
+    $Q_c :  \sum\limits_{i=0}^{|e1| - 1} e1[i] = sumaPres \land \sum\limits_{i=0}^{|e2| - 1} e2[i] = sumaSen \land \sum\limits_{i=0}^{|e3| - 1} e3[i] = sumaDip \land \\ 
+ (res = False \longleftrightarrow sumaPres = SumaDip \land sumaPres = sumaSen)$
+ \begin{itemize}
+     \item Como i $\leq |e1|$ y tambien $|e1| \leq i$ entonces i = $|e1|$. Al reemplazar i por $|e1|$ en las sumatorias de I, se cumplen las igualdades de las sumatorias de $Q_c$.
+     \item Del I, tenemos inmediatamente la implicacion de la doble igualdad de $Q_c$.
+ \end{itemize}
+ Entonces $I \land \neg{B} \longrightarrow Q_c$
+    
+\item $I \land fv \leq 0 \longrightarrow \neg{B}$ \\
+$I : 0 \leq i \leq |e1| \land (\sum\limits_{j=0}^{i - 1} e1[j] = sumaPres \land \sum\limits_{j=0}^{i - 1} e2[j] = sumaSen \land \sum\limits_{j=0}^{i - 1} e3[j] = sumaDip) \land \\
+    (sumaPres = sumaDip  \land sumaPres = sumaSen \longleftrightarrow res = False)$ \\
+    
+$fv \leq 0 : |e1| - i  \leq 0$ \\
+$\neg{B} : |e1| \leq i$
+\begin{itemize}
+    \item De fv $\leq 0: |e1| - i \leq 0 \equiv |e1| \leq i,$ 
+    Que es exactamente $\neg{B}$
+\end{itemize}
 
-Luego se genera $Q_e$ al reemplazar i por s.lenght  %
+Entonces $I \land fv \leq 0 \longrightarrow \neg{B}$
 
-{$\\ B) \: I \land f_v \leq 0 \longrightarrow \neg B$ }
+\item $I \land B \longrightarrow wp(sumaPres := sumaPres + e1[i](\ldots);\: i \: := \: i + 1, \: I)$\\
+$I : 0 \leq i \leq |e1| \land (\sum\limits_{j=0}^{i - 1} e1[j] = sumaPres \land \sum\limits_{j=0}^{i - 1} e2[j] = sumaSen \land \sum\limits_{j=0}^{i - 1} e3[j] = sumaDip) \land \\
+    (sumaPres = sumaDip  \land sumaPres = sumaSen \longleftrightarrow res = False)$ \\
+$B : |e1| > i$ \\
+$wp(sumaPres := sumaPres + e1[i](\ldots);\: i \: := \: i + 1, \: I) \equiv$ 
 
-$F_v \leq 0  \Longleftrightarrow   |s| \leq i $
-\vspace{2mm}
- $\\ |s| \leq i \land I \longrightarrow i \leq   |s|  \equiv \: True (trivial \: por \: la \: definicion \: de \: I ) $ 
-\: \; \\
+\quad\quad \textcolor{cyan}{wp}(sumaPres := sumaPres + e1[i], \textcolor{blue}{wp}(sumaDip := sumaDip + e3[i],
 
-$\\ C)\{I \land B\}S\{I\}$
+\quad\quad \textcolor{green}{wp}(sumaSen := sumaSen + e2[i], \textcolor{red}{wp}(i := i + 1, I))))
 
-$I \land B \longrightarrow Wp(s1;s2;s3;i:=i+1,I) $
+\quad\quad\quad \textcolor{red}{wp}(i := i + 1, I) $\equiv def(i+1) \: \land_{L} I^i_{i+1} \equiv$
 
-$Wp(i:=i+1,I) \equiv def(i+1) \land_{L} I^{i}_{i+1}$
-$\\wp(sumaSenadores:=sumaSenadores + escrutinio\_Senadores,I^{i}_{i+1}) \equiv  0 \leq i <|escrutinio_Senadores| \land_{L} \\ I^{i^{sumaSenadores}}_{i+1_{sumaSenadores + escrutinio\_Senadores[i]}} \equiv 0\leq i < |S| \land_{L} \\ sumaPresidencial = \sum_{x=0}^{i} escrutinio[x]  \land sumaDiputados =\sum_{y=0}^{i} escrutinio[y] \land sumaSenadores =\sum_{yz=0}^{i-1} escrutinio[z] \equiv Q_{1} $
-$\\wp(sumaDiputados:=sumaDiputados + escrutinio\_ Diputados,I^{i}_{i+1}) \equiv  0 \leq i <|escrutinio\_Diputados| \land_{L} \\ I^{i^{sumaDiputados}}_{i+1_{sumaDiputados + escrutinio\_Diputados[i]}} \equiv 0\leq i < |S| \land_{L} \\ sumaPresidencial = \sum_{x=0}^{i} escrutinio[x]  \land sumaDiputados =\sum_{y=0}^{i-1} escrutinio[y] \land sumaSenadores =\sum_{z=0}^{i-1} escrutinio[z] \equiv Q_{2}\ $
-$\\wp(sumaSenadores:=sumaSenadores + escrutinio\_Senadores,I^{i}_{i+1}) \equiv  0 \leq i <|escrutinio_Senadores| \land_{L} \\ I^{i^{sumaSenadores}}_{i+1_{sumaSenadores + escrutinio\_Senadores[i]}} \equiv 0\leq i < |S| \land_{L} \\ sumaPresidencial = \sum_{x=0}^{i} escrutinio[x]  \land sumaDiputados =\sum_{y=0}^{i} escrutinio[y] \land sumaSenadores =\sum_{yz=0}^{i-1} escrutinio[z] \equiv Q_{1} $
+\quad\quad\quad $\equiv True \: \land_{L} I^i_{i+1}$
 
-$\\wp(sumaPresidencial:=sumaPresidencial + escrutinio\_ Presidencial,I^{i}_{i+1}) \equiv  0 \leq i <|escrutinio\_Presidencial| \land_{L} \\ I^{i^{sumaPresidencial}}_{i+1_{sumaPresidencial + escrutinio\_Presidencial[i]}} \equiv 0\leq i < |S| \land_{L} \\ sumaPresidencial = \sum_{x=0}^{i-1} escrutinio[x]  \land sumaDiputados =\sum_{y=0}^{i-1} escrutinio[y] \land sumaSenadores =\sum_{z=0}^{i-1} escrutinio[z] \equiv Q_{3}\ $
-\\Luego
-$\\ I \land B \longrightarrow Q_{3}$
+\quad\quad\quad $\equiv 0 \leq i + 1 \leq |e1| \land (\sum\limits_{j=0}^{i} e1[j] = sumaPres \land \sum\limits_{j=0}^{i} e2[j] = sumaSen \land \sum\limits_{j=0}^{i} e3[j] = sumaDip) \land \\
+    (sumaPres = sumaDip  \land sumaPres = sumaSen \longleftrightarrow res = False) \equiv \textcolor{red}{wp1} $\\
 
-$I \land B \longrightarrow 0\leq i < |S| \land_{L} \\ sumaPresidencial = \sum_{x=0}^{i-1} escrutinio[x]  \land sumaDiputados =\sum_{y=0}^{i-1} escrutinio[y] \land sumaSenadores =\sum_{z=0}^{i-1} escrutinio[z] \\ \equiv True $
+\quad\quad\quad \textcolor{green}{wp}(sumaSen := sumaSen + e2[i], \textcolor{red}{wp1}) $\equiv def(sumaSen +e2[i]) \land_{L} \textcolor{red}{wp1}^{sumaSen}_{sumaSen + e2[i]}$
 
-\vspace{5mm} 
+\quad\quad\quad $\equiv True \: \land_{L} \textcolor{red}{wp1}^{sumaSen}_{sumaSen + e2[i]}$
 
-$\\ D) \{I \land B \land V_0 =  |s| - i \}  S  \{ |s| - i < V_0 \} $
+\quad\quad\quad $\equiv 0 \leq i + 1 \leq |e1| \land (\sum\limits_{j=0}^{i} e1[j] = sumaPres \land \sum\limits_{j=0}^{i} e2[j] = sumaSen + e2[i] \land \sum\limits_{j=0}^{i} e3[j] = sumaDip) \land \\
+    (sumaPres = sumaDip  \land sumaPres = sumaSen + e2[i] \longleftrightarrow res = False) \equiv \textcolor{green}{wp2} $
 
-{I $\land$ B $\land$ $V_0$= $|s|$ - i $\longrightarrow$ wp($S_1$,$S_2$,$S_3$,$S_4$, $|s|$ - i $\leq$ $V_0$ ) }
+\quad\quad\quad \textcolor{blue}{wp}(sumaDip := sumaDip + e3[i], \textcolor{green}{wp2}) $\equiv def(sumaDip +e3[i]) \land_{L} \textcolor{green}{wp2}^{sumaDip}_{sumaDip + e3[i]}$
 
-wp(i := i+1,  $|s|$ - i $\leq$ $V_0$) $\equiv$ ($|s|$-(i+1 $<$ $V_0$) $\equiv$ $|s|$ - i $<$ $V_0$ + 1
+\quad\quad\quad $\equiv True \: \land_{L} \textcolor{green}{wp2}^{sumaDip}_{sumaDip + e3[i]}$
 
-$\text{wp}(sumaSen: sumaSen + \text{escrutinio\_Senadores}[i], |s| - i < V_0 + 1) \equiv \\ (0 \leq i \leq |escrutinio\_Senadores|) \land_L Q^{sumaSen}_{sumaSen+\text{escrutinio\_Senadores}[i]} \equiv (0 \leq i \leq |escrutinio\_Senadores|) \land_L (|s| - i < V_0 + 1)$
+\quad\quad\quad $\equiv 0 \leq i + 1 \leq |e1| \land (\sum\limits_{j=0}^{i} e1[j] = sumaPres \land \sum\limits_{j=0}^{i} e2[j] = sumaSen + e2[i] \land \sum\limits_{j=0}^{i} e3[j] = sumaDip + e3[i]) \land \\
+    (sumaPres = sumaDip + e3[i]  \land sumaPres = sumaSen + e2[i] \longleftrightarrow res = False) \equiv \textcolor{blue}{wp3}$
 
-$\text{wp}(sumaDip: sumaDip + \text{escrutinio\_Diputados}[i], |s| - i < V_0 + 1) \equiv \\ (0 \leq i \leq |escrutinio\_Diputados|) \land_L Q^{sumaDip}_{sumaDip+\text{escrutinio\_Diputados}[i]} \equiv (0 \leq i \leq |escrutinio\_Diputados|) \land_L (|s| - i < V_0 + 1)$
+\quad\quad\quad \textcolor{cyan}{wp}(sumaPres := sumaPres + e1[i], \textcolor{blue}{wp3}) $\equiv def(sumaDip +e3[i]) \land_{L} \textcolor{blue}{wp3}^{sumaPres}_{sumaPres + e1[i]}$
 
-$\text{wp}(sumaPres: sumaPres + \text{escrutinio\_Presidente}[i], |s| - i < V_0 + 1) \equiv \\ (0 \leq i \leq |escrutinio\_Presidente|) \land_L Q^{sumaPres}_{sumaPres+\text{escrutinio\_Presidente}[i]} \equiv (0 \leq i \leq |escrutinio\_Presidente|) \land_L (|s| - i < V_0 + 1)$
+\quad\quad\quad $\equiv True \: \land_{L} \textcolor{blue}{wp3}^{sumaPres}_{sumaPres + e1[i]}$
 
-\text Luego vale la implicaci\'on ya que $v_{0}$ = $|s| - i $ $\rightarrow$  $|s|$ - i $<$ $v_0$+1
-\text Luego es valido
+\quad\quad\quad $\equiv 0 \leq i + 1 \leq |e1| \land (\sum\limits_{j=0}^{i} e1[j] = sumaPres + e1[i] \land \sum\limits_{j=0}^{i} e2[j] = sumaSen + e2[i] \land \sum\limits_{j=0}^{i} e3[j] = sumaDip + e3[i]) \land \\
+    (sumaPres + e1[i] = sumaDip + e3[i]  \land sumaPres + e1[i] = sumaSen + e2[i] \longleftrightarrow res = False) \equiv \textcolor{cyan}{wp4}$ \\
 
+
+Veamos si I $\land \: B \longrightarrow$ \textcolor{cyan}{wp4}
+\begin{itemize}
+    \item De 0 $\leq i \leq |e1|$ y $|e1| > i$ tenemos que $0 \leq i < |e1|$ que implica a $0 \leq i + 1 \leq |e1|$ para todos los valores de i.
+    \item Del I, tenemos res = False, por lo que es verdadero tambien (sumaPres + e1[i] = sumaDip + e3[i]  $\land$ sumaPres + e1[i] = sumaSen + e2[i] $\longleftrightarrow$ res = False)
+    \item Para probar que las 3 sumatorias son iguales a su respectiva variable más el termino actual del escrutinio correspondiente en i, nos basta con probarla de forma general o probar 1, ya que las otras dos son analogas.
+    \begin{center}
+        $\sum\limits_{j=0}^{i} e1[j] = sumaPres + e1[i]$
+        $\sum\limits_{j=0}^{i} e1[j] = sumaPres + e1[i] \equiv e1[0] + e1[1] + ... + e1[i-1] + e1[i] = sumaPres + e1[i] $ \\
+        Restamos el termino e1[i] de ambos lados y nos queda: \\
+        
+        $e1[0] + e1[1] + ... + e1[i-1] = sumaPres$\\
+
+        Del I, sabemos que $\sum\limits_{j=0}^{i - 1} e1[j] = sumaPres$, que podemos descomponer y ver que vale: \\
+        $e1[0] + e1[1] + ... + e1[i-1] = sumaPres$ \\
+        ¡Son identicos! Así que el I me prueba las tres sumatorias del wp.
+    \end{center}
+\end{itemize}
+Entonces $I \land B \longrightarrow wp(sumaPres := sumaPres + e1[i](\ldots);\: i \: := \: i + 1, \: I)$
+
+\item $I \land B \land v_0 = |e1| - i \longrightarrow wp(sumaPres := sumaPres + e1[i](\ldots);\: i \: := \: i + 1, \: |s| - i < v_0)$\\
+$I : 0 \leq i \leq |e1| \land (\sum\limits_{j=0}^{i - 1} e1[j] = sumaPres \land \sum\limits_{j=0}^{i - 1} e2[j] = sumaSen \land \sum\limits_{j=0}^{i - 1} e3[j] = sumaDip) \land \\
+    (sumaPres = sumaDip  \land sumaPres = sumaSen \longleftrightarrow res = False)$ \\
+$B : |e1| > i$ \\
+$v_0 = |e1| - i$ \\
+$wp(sumaPres := sumaPres + e1[i](\ldots);\: i \: := \: i + 1, \: |e1| - i < v_0) \equiv$
+
+\quad\quad \textcolor{cyan}{wp}(sumaPres := sumaPres + e1[i], \textcolor{blue}{wp}(sumaDip := sumaDip + e3[i],
+
+\quad\quad \textcolor{green}{wp}(sumaSen := sumaSen + e2[i], \textcolor{red}{wp}(i := i + 1, $|e1| - i < v_0$))))
+
+\quad\quad\quad \textcolor{red}{wp}(i := i + 1, $|e1| - i < v_0$) $\equiv def(i+1) \: \land_{L} (|e1| - i < v_0)^i_{i+1} \equiv$
+
+\quad\quad\quad $\equiv True \land (|e1| - i < v_0)^i_{i+1}$
+
+\quad\quad\quad $\equiv |e1| - (i+1) < v_0$
+
+\quad\quad\quad $\equiv |e1| - i - 1 < v_0 \equiv \textcolor{red}{wp1}$
+
+\quad\quad\quad \textcolor{green}{wp}(sumaSen := sumaSen + e2[i], $\textcolor{red}{wp1}$) $\equiv def(sumaSen + e2[i]) \: \land_{L} \textcolor{red}{wp1}^{sumaSen}_{sumaSen + e2[i]} \equiv$
+
+\quad\quad\quad $\equiv True \land_L \textcolor{red}{wp1}^{sumaSen}_{sumaSen + e2[i]}$
+
+\quad\quad\quad $\equiv |e1| - i - 1 < v_0 \equiv \textcolor{green}{wp2}$
+
+\quad\quad\quad \textcolor{blue}{wp}(sumaDip := sumaDip + e3[i], $\textcolor{green}{wp2}$) $\equiv def(sumaDip + e3[i]) \: \land_{L} \textcolor{green}{wp2}^{sumaDip}_{sumaDip + e3[i]} \equiv$
+
+\quad\quad\quad $\equiv True \land_L \textcolor{green}{wp2}^{sumaDip}_{sumaDip + e3[i]}$
+
+\quad\quad\quad $\equiv |e1| - i - 1 < v_0 \equiv \textcolor{blue}{wp3}$
+
+\quad\quad\quad \textcolor{cyan}{wp}(sumaPres := sumaPres + e1[i], $\textcolor{blue}{wp3}$) $\equiv def(sumaPres + e1[i]) \: \land_{L} \textcolor{blue}{wp3}^{sumaPres}_{sumaPres + e1[i]} \equiv$
+
+\quad\quad\quad $\equiv True \land_L \textcolor{blue}{wp3}^{sumaPres}_{sumaPres + e1[i]}$
+
+\quad\quad\quad $\equiv |e1| - i - 1 < v_0 \equiv \textcolor{cyan}{wp4}$
+
+Veamos si I $\land \: B \land v_0 = |e1| - i \longrightarrow \textcolor{cyan}{wp4}$
+\begin{itemize}
+    \item Queremos probar que $|e1| - i - 1 < v_0$. Sabemos que $v_0 = |e1| - i$. Esta igualdad nos dice que $v_0 = |e1| - i$ y por lo tanto mayor a todas las expresiones menores a $|e1| - i$, como por ejemplo $|e1| - i - 1$, que justamente es la expresion de $\textcolor{cyan}{wp4}$.
+\end{itemize}
+Entonces $I \land B \land v_0 = |e1| - i \longrightarrow wp(sumaPres := sumaPres + e1[i](\ldots);\: i \: := \: i + 1, \: |s| - i < v_0)$
 \end{enumerate}
+\end{enumerate}
+Como probamos:
+\begin{itemize}
+    \item Pre $\longrightarrow$ wp(codigo previo al ciclo, $P_c$)
+    \item $P_c$ $\longrightarrow$ wp(ciclo(por teorema del invariante), $Q_c$)
+    \item $Q_c$ $\longrightarrow$ wp(codigo posterior al ciclo, Post)
+\end{itemize}
+Al probar estas tres cosas, por corolario de monotonía sabemos que Pre $\longrightarrow$ wp(programa completo, Post)
+y, por lo tanto, el programa es correcto con respecto a la especificación.
+
+
 
 \subsubsection{obtenerSenadoresProvincia}
 
 \begin{itemize}
-	\item s=escrutinio
-      \item $P_c = \{ trans=0 \land i=2 \land (primero=0 \land segundo = 1) \lor (primero = 1 \land segundo=0) \}$
-\item $Q_c = (\forall j:\ent)( 0\leq j < |s| \longrightarrow_{L} ( s[j]\leq s[segundo] \longrightarrow s[segundo]<s[primero))$
-	\item $B = |s| > i$
-	\item $F_v = |s| - i$
-	\item $I = \{0 \leq i \leq |s| \land (\sum\limits_{x=0}^{|s| - 1} escrutinio\_Presidencial[x] \land \sum\limits_{y=0}^{|s| - 1} escrutinio\_Senadores[y] \land \sum\limits_{z=0}^{|s| - 1} escrutinio\_Diputados[z])\}$
+	\item  S= escrutinio, 1º = primero, 2º = segundo, tº =trans
+      \item $P_c = \{ tº=0 \land i=2 \land (1º=0 \land 2° = 1) \lor ( = 1 \land 2°=0) \}$
+\item $Q_c = (\forall j:\ent)( 0\leq j < |s| \longrightarrow_{L} ( s[j]\leq s[2°] \longrightarrow s[2°]<s[1°))$
+	\item $B = |S| > i$ 
+	\item $F_v = |S| - i$
+	\item $I = \{0 \leq i \leq |s| \land_{L} (\forall j:\ent)(0 \leq j < i \longrightarrow_{L} S[1º]>S[j]) \land (\forall j:\ent)(0 \leq j < i \land j \neq 1º \longrightarrow_{L} S[1º]>S[j])$
+        \item $Q_c = \{ \}$
 \end{itemize}
+\begin{enumerate}
+    \item $P_c \longrightarrow I$ \\
+    $P_c : t°=0 \land i=2 \land (1°=0 \land 2° = 1) \lor ( = 1 \land segundo=0)$ \\
+    $I : 0 \leq i \leq |s| \land_{L} (\forall j:\ent)(0 \leq j < i \longrightarrow_{L} S[1º]>S[j]) \land (\forall j:\ent)(0 \leq j < i \land j \neq 1º \longrightarrow_{L} S[1º]>S[j])$
+    $Q_c : 0\leq j <|S| $
+    \begin{itemize}
+        \item Como i = 2, se cumple que 0 $\leq$ i $\leq |s|$
+            \item Procedemos a observar ambos casos de 1º y 2º (tº no nos importa debido a que no se lo menciona en el I). 
+                 \\ Caso 1: 1°=0 $\land$ 2°=1 $\land$ i=0
+                    \begin{center}
+                        $(\forall j:\ent)(0 \leq j < 0 \longrightarrow_{L} S[0]>S[j]) \land (\forall j:\ent)(0 \leq j < 0 \land j \neq 0 \longrightarrow_{L} S[1]>S[j]) \equiv$
+                    \\  $(\forall j:\ent)(False \longrightarrow_{L} S[0]>S[j]) \land (\forall j:\ent)(False \land j \neq 0 \longrightarrow_{L} S[1]>S[j]) \equiv$
+                    \\ $True \land True$ \; \text{(por tabla de verdad de la implicacion)}
+                    \end{center}
+                  Caso 2: 1°=1 $\land$ 2°=0 $\land$ i=0
+                    \begin{center}
+                        $(\forall j:\ent)(0 \leq j < 0 \longrightarrow_{L} S[1]>S[j]) \land (\forall j:\ent)(0 \leq j < 0 \land j \neq 1 \longrightarrow_{L} S[0]>S[j]) \equiv $
+                    \\  $(\forall j:\ent)(False \longrightarrow_{L} S[0]>S[j]) \land (\forall j:\ent)(False \land j \neq 1 \longrightarrow_{L} S[1]>S[j]) \equiv $
+                    \\  $True \land True \;$\text{(por tabla de verdad de la implicacion)}
+                    \end{center}
+              \text{Luego como se cumple en ambos casos vale entonces $P_c \longrightarrow I$.}
+    \end{itemize}
+    \item $I \land \neg B \longrightarrow Q_c$
+    $I : 0 \leq i \leq |s| \land_{L} (\forall j:\ent)(0 \leq j < i \longrightarrow_{L} S[1º]>S[j]) \land (\forall j:\ent)(0 \leq j < i \land j \neq 1º \longrightarrow_{L} S[1º]>S[j])$
+    $B : |S| > i$
+    
+    
 
-$\\1) Pre \longrightarrow_{L} Wp(S_1;S_2;S_3,P_{c})$
-$\\ Wp(S_1,Wp(S_2,Wp(S_3,P_c)))$
-$\\ Primero \: Wp(S_3,P_c)\equiv Wp(i:=2,P_c) \equiv def(2) \land_{L} P_{c_{2}}^{i} \equiv True \land_{L} trans = 0 \land 2=2 \land \\ ((primero = 0 \land segundo = 1) \lor (primero = 1 \land segundo = 0)) \equiv Q^{1}$
-$Wp(S_{2},Q^1) \equiv def(B) \land_{L} (B \land Wp(P_1;P_2,Q^1) \lor \\  (\neg B \land Wp(P_3;P_4,Q^1)))$
-$ \\ Wp(P_1;P_2,Q^1) \equiv  Wp(P_1,Wp(P_2,Q^1))$
-$\\ Wp(P_2,Q^1) \equiv Wp(segundo :=1, Q^1) \equiv def(1) \land Q^{1^{segundo}}_1 \equiv trnas=0 \land (primero =1 \land 1=1) \lor (primero =1 \land 1=0) \equiv Q^2$
-$Wp(P_1,Q^2) \equiv Wp(primero :=0, Q^2) \equiv def(0) \land Q^{2^{primero}}_0 \equiv trans =0 \land ((0=0 \land 1=1) \lor (0=1 \land 1=0)) \equiv trans=0 \equiv Q^3$
-$Luego \: Wp(S_2,Q^1) \equiv (B \land trans = 0) \lor (\neg B \land Wp(P_3,P4,Q^1)) $
-$\\ Wp(P_3;P_4,Q^1) \equiv Wp(P_3,Wp(P_4,Q^1))$
-$\\ Wp(P_4, Q^1) \equiv Wp(segundo :=0, Q^1) \equiv def(0) \land Q^{1^{segundo}}_{0} \equiv trans=0 \land ((primero=0 \land 0 = 1) \lor (primero=1 \land 0=0)) \equiv Q^4$
-$ Wp(P_3,Q^4) \equiv Wp(primero=1,Q^4) \equiv def(1) \land Q^{4^{primero}}_{1} \equiv trans = 0 \land ((1=0 \land False )\lor (1=1 \land True)) \equiv trans = 0 \equiv Q^3$
-$Entonces \: Wp(S_2,Q^1) \equiv ((B \land trans=0) \lor (\neg B \land trans=0)) \equiv (escrutinio[0]>escrutinio[1] \land trans=0) \lor (escrutinio[0]\leq escrutinio[1] \land trans=0) \equiv Q^5$
-$\\Por ultimo Wp(S_1,Q^5) \equiv Wp(trans:=0,Q^5) \equiv def(0) \land Q^{5^{trans}}_{0} \equiv (escrutinio[0] > escrutinio[1]\land 0=0) \lor (escrutinio[0] \leq escrutiniop[1] \land 0=0) \equiv True$ 
+\end{enumerate}
 \end{document}
 
 
